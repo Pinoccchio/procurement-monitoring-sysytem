@@ -5,6 +5,7 @@ import { LayoutGrid, FileText, Users, UserCog, Shield, Package, Wallet, LogOut, 
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 
 interface SidebarProps {
   isOpen: boolean
@@ -15,26 +16,30 @@ export function Sidebar({ isOpen, className }: SidebarProps) {
   const [isAdminOpen, setIsAdminOpen] = useState(false)
 
   return (
-    <aside className={cn(
-      "fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r bg-white pt-16 transition-transform",
-      isOpen && "translate-x-0",
-      className
-    )}>
+    <motion.aside 
+      initial={{ x: "-100%" }}
+      animate={{ x: isOpen ? 0 : "-100%" }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-white pt-16",
+        className
+      )}
+    >
       <div className="flex flex-col h-full">
         <div className="flex flex-col items-center gap-4 p-4 border-b">
           <img 
-            src="/pms-logo.png"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pms-logo-WKQhYflzTjlSrGI3gkWDtII5c1jzeK.png" 
             alt="PMS Logo" 
             className="h-16 w-auto"
           />
-          <h2 className="text-xl font-bold text-gray-900">SLSU-JGE</h2>
+          <h2 className="text-xl font-bold text-[#2E8B57]">SLSU-JGE</h2>
         </div>
         
         <nav className="flex-1 space-y-1 p-4">
           <Link href="/dashboard">
             <Button 
               variant="ghost" 
-              className="w-full justify-start bg-[#4ADE80] text-white hover:bg-[#22c55e] hover:text-white rounded-lg"
+              className="w-full justify-start bg-[#2E8B57] text-white hover:bg-[#1a5235] hover:text-white rounded-lg transition-colors duration-300"
             >
               <LayoutGrid className="mr-3 h-5 w-5" />
               Dashboard
@@ -44,7 +49,7 @@ export function Sidebar({ isOpen, className }: SidebarProps) {
           <Link href="/procurement">
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
             >
               <FileText className="mr-3 h-5 w-5" />
               PROCUREMENT
@@ -54,34 +59,39 @@ export function Sidebar({ isOpen, className }: SidebarProps) {
           <div>
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
               onClick={() => setIsAdminOpen(!isAdminOpen)}
             >
               <UserCog className="mr-3 h-5 w-5" />
               <span className="flex-1 text-left">ADMIN</span>
               <ChevronDown className={cn(
-                "h-4 w-4 transition-transform",
+                "h-4 w-4 transition-transform duration-300",
                 isAdminOpen && "rotate-180"
               )} />
             </Button>
             {isAdminOpen && (
-              <div className="ml-9 mt-1">
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="ml-9 mt-1"
+              >
                 <Link href="/admin/budget-officer">
                   <Button 
                     variant="ghost" 
-                    className="w-full justify-start text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                    className="w-full justify-start text-sm text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
                   >
                     Budget Officer
                   </Button>
                 </Link>
-              </div>
+              </motion.div>
             )}
           </div>
 
           <Link href="/director">
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
             >
               <Users className="mr-3 h-5 w-5" />
               DIRECTOR
@@ -91,7 +101,7 @@ export function Sidebar({ isOpen, className }: SidebarProps) {
           <Link href="/bac">
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
             >
               <Shield className="mr-3 h-5 w-5" />
               BAC
@@ -101,7 +111,7 @@ export function Sidebar({ isOpen, className }: SidebarProps) {
           <Link href="/supply">
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
             >
               <Package className="mr-3 h-5 w-5" />
               SUPPLY
@@ -111,7 +121,7 @@ export function Sidebar({ isOpen, className }: SidebarProps) {
           <Link href="/remaining-funds">
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
             >
               <Wallet className="mr-3 h-5 w-5" />
               REMAINING FUNDS
@@ -122,14 +132,14 @@ export function Sidebar({ isOpen, className }: SidebarProps) {
         <div className="border-t p-4">
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+            className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
           >
             <LogOut className="mr-3 h-5 w-5" />
             Sign Out
           </Button>
         </div>
       </div>
-    </aside>
+    </motion.aside>
   )
 }
 

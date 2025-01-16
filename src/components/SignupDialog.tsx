@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChevronRight, Eye, EyeOff, X, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { signUp, type UserRole } from '@/utils/auth'
 
 interface SignUpDialogProps {
   isOpen: boolean;
@@ -15,12 +16,19 @@ interface SignUpDialogProps {
 }
 
 export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps) {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: '' as UserRole
+  })
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -39,21 +47,55 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
     }
   }, [isOpen, onClose])
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleRoleChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      role: value as UserRole
+    }))
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    // Simulating sign-up process
-    setTimeout(() => {
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
       setIsLoading(false)
+      return
+    }
+
+    try {
+      const { user, profile } = await signUp({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role
+      })
+
       setIsSuccess(true)
-      // Redirect to login page after 3 seconds
+      
+      // Redirect to dashboard after 3 seconds
       setTimeout(() => {
         onClose()
-        router.push('/login')
+        router.push(`/dashboard/${profile.role}`)
       }, 3000)
-    }, 2000)
+    } catch (err) {
+      console.error('Signup error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create account')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isOpen) return null
@@ -88,6 +130,31 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
             <h2 className="text-2xl font-bold text-center mb-6 text-[#2E8B57]">Create Account</h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Select onValueChange={handleRoleChange} required>
+                  <SelectTrigger className="w-full border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0">
+                    <SelectValue placeholder="Select User Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>General Users</SelectLabel>
+                      <SelectItem value="end-user">End User</SelectItem>
+                      <SelectItem value="procurement">Procurement Officer</SelectItem>
+                      <SelectItem value="supply">Supply Officer</SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Management</SelectLabel>
+                      <SelectItem value="director">Director</SelectItem>
+                      <SelectItem value="bac">BAC Member</SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Administration</SelectLabel>
+                      <SelectItem value="budget">Budget Officer</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Input 
@@ -95,6 +162,8 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                     type="text" 
                     placeholder="First Name" 
                     required 
+                    value={formData.firstName}
+                    onChange={handleInputChange}
                     className="border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
                   />
                 </div>
@@ -104,24 +173,32 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                     type="text" 
                     placeholder="Last Name" 
                     required 
+                    value={formData.lastName}
+                    onChange={handleInputChange}
                     className="border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
                   />
                 </div>
               </div>
+              
               <div className="space-y-2">
                 <Input 
                   name="email" 
                   type="email" 
                   placeholder="Email" 
                   required 
+                  value={formData.email}
+                  onChange={handleInputChange}
                   className="border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
                 />
               </div>
+              
               <div className="relative">
                 <Input 
                   name="password" 
                   type={showPassword ? "text" : "password"} 
                   placeholder="Password" 
+                  value={formData.password}
+                  onChange={handleInputChange}
                   className="pr-10 border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
                   required 
                 />
@@ -138,11 +215,14 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                   )}
                 </button>
               </div>
+              
               <div className="relative">
                 <Input 
                   name="confirmPassword" 
                   type={showConfirmPassword ? "text" : "password"} 
                   placeholder="Confirm Password" 
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
                   className="pr-10 border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
                   required 
                 />
@@ -159,19 +239,7 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                   )}
                 </button>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="terms" 
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                />
-                <label
-                  htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  I agree to the Terms of Service and Privacy Policy
-                </label>
-              </div>
+
               <AnimatePresence mode="wait">
                 {error && (
                   <motion.div
@@ -194,12 +262,13 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                   </motion.div>
                 )}
               </AnimatePresence>
+
               <Button 
                 type="submit" 
                 className={`w-full ${
                   isLoading ? 'bg-[#2E8B57]/70' : 'bg-[#2E8B57] hover:bg-[#1a5235]'
                 } text-white font-semibold py-2 px-4 rounded-md transition-all duration-300 ease-in-out transform hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2E8B57] focus:ring-offset-2`}
-                disabled={isLoading || !agreedToTerms}
+                disabled={isLoading || !formData.role}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
@@ -217,6 +286,7 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                 )}
               </Button>
             </form>
+
             <div className="mt-4 text-center">
               <p className="text-sm text-slate-600">
                 Already have an account?{' '}
@@ -244,7 +314,7 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
             className="fixed bottom-5 right-5 bg-[#2E8B57] text-white p-4 rounded-md shadow-lg flex items-center"
           >
             <CheckCircle className="mr-2 h-5 w-5" />
-            <span>Sign up successful! Redirecting to login...</span>
+            <span>Sign up successful! Redirecting to dashboard...</span>
           </motion.div>
         )}
       </AnimatePresence>

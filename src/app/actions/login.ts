@@ -1,5 +1,3 @@
-'use server'
-
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
@@ -47,8 +45,8 @@ export async function login(formData: FormData) {
     }
 
     // Set session cookie
-    const cookieStore = await cookies() // Await the promise here
-    await cookieStore.set('session', JSON.stringify(data.session), {
+    const cookieStore = await cookies()  // Await the cookies call
+    cookieStore.set('session', JSON.stringify(data.session), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week

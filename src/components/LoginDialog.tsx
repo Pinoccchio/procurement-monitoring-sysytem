@@ -7,18 +7,22 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChevronRight, Eye, EyeOff, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { signIn } from '@/utils/auth'
 
 interface LoginDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onShowSignUp: () => void;
+  isOpen: boolean
+  onClose: () => void
+  onShowSignUp: () => void
 }
 
 export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [userType, setUserType] = useState<string>('')
+  const [isFormValid, setIsFormValid] = useState(false) // Added state for form validity
   const router = useRouter()
 
   useEffect(() => {
@@ -37,24 +41,48 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
     }
   }, [isOpen, onClose])
 
+  useEffect(() => {
+    setIsFormValid(!!userType && !!email && !!password) // Added useEffect to check form validity
+  }, [userType, email, password])
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    // Simulating login process
-    setTimeout(() => {
+    if (!userType) {
+      setError('Please select a user type')
       setIsLoading(false)
-      // For demonstration purposes, always "succeed" and close the dialog
+      return
+    }
+
+    try {
+      const { profile } = await signIn(email, password)
+      
+      // Check if the signed-in user's account type matches the selected user type
+      if (profile.account_type !== userType) {
+        setError('Selected user type does not match your account')
+        setIsLoading(false)
+        return
+      }
+
       onClose()
-      router.push(`/dashboard/${userType}`)
-    }, 2000)
+      if (profile.account_type === 'procurement') {
+        router.push('/procurement/dashboard')
+      } else {
+        router.push(`/dashboard/${profile.account_type}`)
+      }
+    } catch (err) {
+      setError('Invalid email or password')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isOpen) return null
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -112,6 +140,8 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
                 type="email" 
                 placeholder="Email" 
                 required 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
               />
             </div>
@@ -121,6 +151,8 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
                 name="password"
                 type={showPassword ? "text" : "password"} 
                 placeholder="Password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="pr-10 border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
                 required
               />
@@ -141,6 +173,7 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
             <AnimatePresence>
               {error && (
                 <motion.div
+                  key="error-message"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -163,9 +196,13 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
             <Button 
               type="submit" 
               className={`w-full ${
-                isLoading ? 'bg-[#2E8B57]/70' : 'bg-[#2E8B57] hover:bg-[#1a5235]'
+                !isFormValid
+                  ? 'bg-[#2E8B57]/50 cursor-not-allowed'
+                  : isLoading
+                  ? 'bg-[#2E8B57]/70'
+                  : 'bg-[#2E8B57] hover:bg-[#1a5235]'
               } text-white font-semibold py-2 px-4 rounded-md transition-all duration-300 ease-in-out transform hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2E8B57] focus:ring-offset-2`} 
-              disabled={isLoading}
+              disabled={!isFormValid || isLoading}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">

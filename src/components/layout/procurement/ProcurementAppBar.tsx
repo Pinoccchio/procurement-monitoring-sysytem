@@ -10,13 +10,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
-interface AppBarProps {
+interface ProcurementAppBarProps {
   isSidebarOpen: boolean
   onSidebarOpenChange: (open: boolean) => void
   className?: string
 }
 
-export function AppBar({ isSidebarOpen, onSidebarOpenChange, className }: AppBarProps) {
+export function ProcurementAppBar({ isSidebarOpen, onSidebarOpenChange, className }: ProcurementAppBarProps) {
   return (
     <header className={cn("bg-white border-b sticky top-0 z-50 shadow-sm", className)}>
       <div className="container mx-auto px-4">
@@ -44,7 +44,7 @@ export function AppBar({ isSidebarOpen, onSidebarOpenChange, className }: AppBar
               </div>
             </Button>
             <h1 className="text-xl font-bold text-[#2E8B57]">
-              Procurement Monitoring System
+              Procurement Management
             </h1>
           </div>
           
@@ -57,17 +57,14 @@ export function AppBar({ isSidebarOpen, onSidebarOpenChange, className }: AppBar
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="bg-[#2E8B57] hover:bg-[#1a5235] text-white transition-colors duration-300">
-                  ACCOUNT
+                  PROCUREMENT
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem>End User Account</DropdownMenuItem>
-                <DropdownMenuItem>Procurement Account</DropdownMenuItem>
-                <DropdownMenuItem>Admin Account</DropdownMenuItem>
-                <DropdownMenuItem>Director Account</DropdownMenuItem>
-                <DropdownMenuItem>BAC Account</DropdownMenuItem>
-                <DropdownMenuItem>Supply Account</DropdownMenuItem>
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>Sign Out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -13,7 +13,7 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f8faf8]">
       <AppBar 
         isSidebarOpen={isSidebarOpen} 
         onSidebarOpenChange={setIsSidebarOpen} 
@@ -22,7 +22,7 @@ export default function DashboardLayout({
       
       {/* Main content */}
       <main className={cn(
-        "pt-16 transition-[margin]",
+        "pt-16 transition-[margin] duration-300 ease-in-out",
         isSidebarOpen ? "ml-64" : "ml-0"
       )}>
         <div className="container mx-auto p-6">
