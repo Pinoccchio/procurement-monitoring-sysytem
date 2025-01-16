@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils'
 import { LayoutGrid, FileText, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
-import { useProcurement } from '@/contexts/procurement-context'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 interface ProcurementSidebarProps {
   isOpen: boolean
@@ -12,7 +13,7 @@ interface ProcurementSidebarProps {
 }
 
 export function ProcurementSidebar({ isOpen, className }: ProcurementSidebarProps) {
-  const { toggleView } = useProcurement()
+  const pathname = usePathname()
 
   return (
     <motion.aside 
@@ -38,22 +39,30 @@ export function ProcurementSidebar({ isOpen, className }: ProcurementSidebarProp
         </div>
         
         <nav className="flex-1 space-y-1 p-4">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
-            onClick={toggleView}
-          >
-            <LayoutGrid className="mr-3 h-5 w-5" />
-            Dashboard
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
-            onClick={toggleView}
-          >
-            <FileText className="mr-3 h-5 w-5" />
-            Purchase Requests
-          </Button>
+          <Link href="/procurement/dashboard">
+            <Button 
+              variant="ghost" 
+              className={cn(
+                "w-full justify-start hover:text-white hover:bg-[#2E8B57] transition-colors duration-300",
+                pathname === '/procurement/dashboard' ? "bg-[#2E8B57] text-white" : "text-[#2E8B57]"
+              )}
+            >
+              <LayoutGrid className="mr-3 h-5 w-5" />
+              Dashboard
+            </Button>
+          </Link>
+          <Link href="/procurement/purchase_requests">
+            <Button 
+              variant="ghost" 
+              className={cn(
+                "w-full justify-start hover:text-white hover:bg-[#2E8B57] transition-colors duration-300",
+                pathname === '/procurement/purchase_requests' ? "bg-[#2E8B57] text-white" : "text-[#2E8B57]"
+              )}
+            >
+              <FileText className="mr-3 h-5 w-5" />
+              Purchase Requests
+            </Button>
+          </Link>
         </nav>
 
         <div className="border-t p-4">
