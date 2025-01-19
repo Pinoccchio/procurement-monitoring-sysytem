@@ -1,4 +1,4 @@
-import type { CreatePurchaseRequest, PurchaseRequest, TrackingEntry } from '@/types/procurement/purchase-request'
+import type { CreatePurchaseRequest, PurchaseRequest, TrackingEntry, PRStatus, PRDesignation } from '@/types/procurement/purchase-request'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -29,7 +29,7 @@ export async function createPurchaseRequest(data: CreatePurchaseRequest): Promis
       .from('tracking_history')
       .insert([{
         pr_id: pr.id,
-        status: 'Created',
+        status: 'pending',
         designation: data.current_designation,
         notes: 'Initial creation'
       }])
@@ -58,8 +58,8 @@ export async function getPurchaseRequests(): Promise<PurchaseRequest[]> {
 
 export async function updatePurchaseRequestStatus(
   prId: string, 
-  status: string,
-  nextDesignation: string,
+  status: PRStatus,
+  nextDesignation: PRDesignation,
   notes?: string
 ): Promise<void> {
   const { error: updateError } = await supabaseClient
@@ -122,6 +122,22 @@ export async function uploadDocument(file: File, retries = 3): Promise<string> {
   }
 }
 
-// Export the Supabase client to fix the import error
+export async function getTrackingHistory(purchaseRequestId: string): Promise<TrackingEntry[]> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('tracking_history')
+      .select('*')
+      .eq('pr_id', purchaseRequestId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return data || []
+  } catch (error) {
+    console.error('Error fetching tracking history:', error)
+    throw new Error('Failed to fetch tracking history')
+  }
+}
+
 export { supabaseClient }
 

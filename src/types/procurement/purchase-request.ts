@@ -1,14 +1,14 @@
 export type PRStatus = 'pending' | 'approved' | 'disapproved' | 'forwarded' | 'returned'
-export type PRDesignation = 'procurement' | 'administrative' | 'budget' | 'director' | 'bac' | 'supply' | 'admin'
+export type PRDesignation = 'procurement' | 'admin' | 'budget' | 'director' | 'bac' | 'supply'
 
 export interface PurchaseRequest {
   id: string
   pr_number: string
   department: string
-  status: PRStatus
-  current_designation: PRDesignation
   created_at: string
   updated_at: string
+  status: PRStatus
+  current_designation: PRDesignation
   document_url: string
 }
 
