@@ -67,14 +67,14 @@ export async function getPurchaseRequests(): Promise<PurchaseRequest[]> {
 export async function updatePurchaseRequestStatus(
   prId: string,
   status: PRStatus,
-  nextDesignation: PRDesignation,
+  designation: PRDesignation,
   notes?: string,
 ): Promise<void> {
   const { error: updateError } = await supabaseClient
     .from("purchase_requests")
     .update({
       status: status,
-      current_designation: nextDesignation,
+      current_designation: designation,
     })
     .eq("id", prId)
 
@@ -84,7 +84,7 @@ export async function updatePurchaseRequestStatus(
     {
       pr_id: prId,
       status: status,
-      designation: nextDesignation,
+      designation: designation,
       notes: notes,
     },
   ])

@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Check, X, FileText, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Search, Check, X, FileText, AlertCircle, ArrowLeft, CornerDownRight } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { TrackingDialog } from '@/components/layout/admin/TrackingDialog'
-import { supabaseClient } from '@/utils/procurement/purchase-requests'
-import type { PurchaseRequest } from '@/types/procurement/purchase-request'
+import { TrackingDialog } from "@/components/layout/admin/TrackingDialog"
+import { supabaseClient, updatePurchaseRequestStatus } from "@/utils/procurement/purchase-requests"
+import type { PurchaseRequest } from "@/types/procurement/purchase-request"
 
 export default function AdministrativePage() {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState("")
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([])
   const [selectedPR, setSelectedPR] = useState<PurchaseRequest | null>(null)
   const [isTrackingOpen, setIsTrackingOpen] = useState(false)
@@ -36,20 +36,32 @@ export default function AdministrativePage() {
       setIsLoading(true)
       setError(null)
       const { data, error } = await supabaseClient
-        .from('purchase_requests')
-        .select('*')
-        .eq('status', 'approved')
-        .eq('current_designation', 'admin')
-        .order('created_at', { ascending: false })
+        .from("purchase_requests")
+        .select("*")
+        .or("status.eq.forwarded,status.eq.approved,status.eq.received")
+        .eq("current_designation", "admin")
+        .order("created_at", { ascending: false })
 
       if (error) throw error
 
       setPurchaseRequests(data || [])
     } catch (error) {
-      console.error('Error loading purchase requests:', error)
-      setError('Failed to load purchase requests. Please try again.')
+      console.error("Error loading purchase requests:", error)
+      setError("Failed to load purchase requests. Please try again.")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleReceive = async (pr: PurchaseRequest) => {
+    try {
+      setError(null)
+      await updatePurchaseRequestStatus(pr.id, "received", "admin", "Purchase request received by Administrative")
+      await loadPurchaseRequests()
+      setSuccessMessage("Purchase request received successfully!")
+    } catch (error) {
+      console.error("Error receiving purchase request:", error)
+      setError("Failed to receive purchase request. Please try again.")
     }
   }
 
@@ -57,15 +69,15 @@ export default function AdministrativePage() {
     try {
       setError(null)
       await supabaseClient
-        .from('purchase_requests')
-        .update({ status: 'approved', updated_by: 'admin', remarks: 'Purchase request approved by Administrative' })
-        .eq('id', pr.id)
+        .from("purchase_requests")
+        .update({ status: "approved", updated_by: "admin", remarks: "Purchase request approved by Administrative" })
+        .eq("id", pr.id)
 
       await loadPurchaseRequests()
-      setSuccessMessage('Purchase request approved successfully!')
+      setSuccessMessage("Purchase request approved successfully!")
     } catch (error) {
-      console.error('Error approving purchase request:', error)
-      setError('Failed to approve purchase request. Please try again.')
+      console.error("Error approving purchase request:", error)
+      setError("Failed to approve purchase request. Please try again.")
     }
   }
 
@@ -73,14 +85,18 @@ export default function AdministrativePage() {
     try {
       setError(null)
       await supabaseClient
-        .from('purchase_requests')
-        .update({ status: 'disapproved', updated_by: 'admin', remarks: 'Purchase request disapproved by Administrative' })
-        .eq('id', pr.id)
+        .from("purchase_requests")
+        .update({
+          status: "disapproved",
+          updated_by: "admin",
+          remarks: "Purchase request disapproved by Administrative",
+        })
+        .eq("id", pr.id)
       await loadPurchaseRequests()
-      setSuccessMessage('Purchase request disapproved successfully!')
+      setSuccessMessage("Purchase request disapproved successfully!")
     } catch (error) {
-      console.error('Error disapproving purchase request:', error)
-      setError('Failed to disapprove purchase request. Please try again.')
+      console.error("Error disapproving purchase request:", error)
+      setError("Failed to disapprove purchase request. Please try again.")
     }
   }
 
@@ -88,31 +104,32 @@ export default function AdministrativePage() {
     try {
       setError(null)
       await supabaseClient
-        .from('purchase_requests')
-        .update({ status: 'returned', current_designation: 'procurement', updated_by: 'admin', remarks: 'Purchase request returned to Procurement by Administrative' })
-        .eq('id', pr.id)
+        .from("purchase_requests")
+        .update({
+          status: "returned",
+          current_designation: "procurement",
+          updated_by: "admin",
+          remarks: "Purchase request returned to Procurement by Administrative",
+        })
+        .eq("id", pr.id)
       await loadPurchaseRequests()
-      setSuccessMessage('Purchase request returned successfully!')
+      setSuccessMessage("Purchase request returned successfully!")
     } catch (error) {
-      console.error('Error returning purchase request:', error)
-      setError('Failed to return purchase request. Please try again.')
+      console.error("Error returning purchase request:", error)
+      setError("Failed to return purchase request. Please try again.")
     }
   }
 
-  const filteredRequests = purchaseRequests.filter(pr =>
-    pr.pr_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pr.department.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRequests = purchaseRequests.filter(
+    (pr) =>
+      pr.pr_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pr.department.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <motion.h1 
+        <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.5 }}
@@ -120,18 +137,18 @@ export default function AdministrativePage() {
         >
           Administrative Management
         </motion.h1>
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
           className="relative w-full md:w-[300px]"
         >
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2E8B57]" />
-          <Input 
+          <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 border-[#2E8B57] focus:ring-[#2E8B57]" 
-            placeholder="Search PR number or department" 
+            className="pl-10 border-[#2E8B57] focus:ring-[#2E8B57]"
+            placeholder="Search PR number or department"
             type="search"
           />
         </motion.div>
@@ -167,11 +184,11 @@ export default function AdministrativePage() {
         transition={{ delay: 0.4, duration: 0.5 }}
         className="space-y-4"
       >
-        <h2 className="text-xl font-bold mb-4 text-[#2E8B57]">Forwarded Purchase Requests</h2>
+        <h2 className="text-xl font-bold mb-4 text-[#2E8B57]">Purchase Requests</h2>
         {isLoading ? (
           <p>Loading purchase requests...</p>
         ) : filteredRequests.length === 0 ? (
-          <p>No forwarded purchase requests found.</p>
+          <p>No purchase requests found.</p>
         ) : (
           filteredRequests.map((pr) => (
             <Card key={pr.id} className="hover:shadow-md transition-shadow">
@@ -191,95 +208,115 @@ export default function AdministrativePage() {
                   </div>
 
                   <div className="flex gap-2 w-full md:w-auto">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="flex-1 md:flex-none border-green-500 text-green-500 hover:bg-green-50"
-                        >
-                          <Check className="h-4 w-4 mr-2" />
-                          Approve
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Approve Purchase Request</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to approve {pr.pr_number}?
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end gap-2 mt-4">
-                          <Button variant="outline">Cancel</Button>
-                          <Button 
-                            onClick={() => handleApprove(pr)}
-                            className="bg-green-500 hover:bg-green-600"
+                    {pr.status === "forwarded" && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="flex-1 md:flex-none border-blue-500 text-blue-500 hover:bg-blue-50"
                           >
-                            Confirm Approval
+                            <CornerDownRight className="h-4 w-4 mr-2" />
+                            Receive
                           </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Receive Purchase Request</DialogTitle>
+                            <DialogDescription>Are you sure you want to receive {pr.pr_number}?</DialogDescription>
+                          </DialogHeader>
+                          <div className="flex justify-end gap-2 mt-4">
+                            <Button variant="outline">Cancel</Button>
+                            <Button onClick={() => handleReceive(pr)} className="bg-blue-500 hover:bg-blue-600">
+                              Confirm Receipt
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="flex-1 md:flex-none border-red-500 text-red-500 hover:bg-red-50"
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                          Disapprove
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Disapprove Purchase Request</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to disapprove {pr.pr_number}?
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end gap-2 mt-4">
-                          <Button variant="outline">Cancel</Button>
-                          <Button 
-                            onClick={() => handleDisapprove(pr)}
-                            variant="destructive"
-                          >
-                            Confirm Disapproval
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    {(pr.status === "received" || pr.status === "approved") && (
+                      <>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="flex-1 md:flex-none border-green-500 text-green-500 hover:bg-green-50"
+                            >
+                              <Check className="h-4 w-4 mr-2" />
+                              Approve
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Approve Purchase Request</DialogTitle>
+                              <DialogDescription>Are you sure you want to approve {pr.pr_number}?</DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-end gap-2 mt-4">
+                              <Button variant="outline">Cancel</Button>
+                              <Button onClick={() => handleApprove(pr)} className="bg-green-500 hover:bg-green-600">
+                                Confirm Approval
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="flex-1 md:flex-none border-yellow-500 text-yellow-500 hover:bg-yellow-50"
-                        >
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Return
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Return Purchase Request</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to return {pr.pr_number} to Procurement?
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end gap-2 mt-4">
-                          <Button variant="outline">Cancel</Button>
-                          <Button 
-                            onClick={() => handleReturn(pr)}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                          >
-                            Confirm Return
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="flex-1 md:flex-none border-red-500 text-red-500 hover:bg-red-50"
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Disapprove
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Disapprove Purchase Request</DialogTitle>
+                              <DialogDescription>Are you sure you want to disapprove {pr.pr_number}?</DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-end gap-2 mt-4">
+                              <Button variant="outline">Cancel</Button>
+                              <Button onClick={() => handleDisapprove(pr)} variant="destructive">
+                                Confirm Disapproval
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
 
-                    <Button 
-                      variant="outline" 
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="flex-1 md:flex-none border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                            >
+                              <ArrowLeft className="h-4 w-4 mr-2" />
+                              Return
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Return Purchase Request</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to return {pr.pr_number} to Procurement?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-end gap-2 mt-4">
+                              <Button variant="outline">Cancel</Button>
+                              <Button
+                                onClick={() => handleReturn(pr)}
+                                className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                              >
+                                Confirm Return
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </>
+                    )}
+
+                    <Button
+                      variant="outline"
                       className="flex-1 md:flex-none"
                       onClick={() => {
                         setSelectedPR(pr)
@@ -311,3 +348,4 @@ export default function AdministrativePage() {
     </motion.div>
   )
 }
+
