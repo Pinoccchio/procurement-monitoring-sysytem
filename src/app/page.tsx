@@ -25,9 +25,12 @@ export default function HomePage() {
       if (user) {
         if (user.account_type === 'procurement') {
           router.push('/procurement/dashboard')
-        } else {
-          router.push(`/dashboard/${user.account_type}`)
+        } else if (user.account_type === 'admin') {
+          router.push('/admin/dashboard')
         }
+        else {
+          router.push(`${user.account_type}/dashboard`)
+        }  
       }
     }
 

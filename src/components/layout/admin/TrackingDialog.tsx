@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
-import { updatePurchaseRequestStatus } from "@/utils/procurement/purchase-requests"
+import { supabaseClient } from "@/utils/procurement/purchase-requests"
 import type { PurchaseRequest, PRStatus, PRDesignation } from "@/types/procurement/purchase-request"
 
 interface TrackingDialogProps {
@@ -24,13 +24,18 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
   const handleUpdate = async () => {
     setIsUpdating(true)
     try {
-      const updatedDesignation = nextDesignation === 'administrative' ? 'admin' : nextDesignation
-      await updatePurchaseRequestStatus(
-        purchaseRequest.id,
-        status,
-        updatedDesignation,
-        remarks
-      )
+      const { error } = await supabaseClient
+        .from('purchase_requests')
+        .update({
+          status: status,
+          current_designation: nextDesignation,
+          updated_by: 'admin',
+          remarks: remarks
+        })
+        .eq('id', purchaseRequest.id)
+
+      if (error) throw error
+
       onUpdate()
       onClose()
     } catch (error) {
@@ -69,10 +74,9 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="disapproved">Disapproved</SelectItem>
-                <SelectItem value="forwarded">Forwarded</SelectItem>
+                <SelectItem value="returned">Returned</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -94,7 +98,6 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
               </SelectContent>
             </Select>
           </div>
-          {/* Note: 'administrative' is equivalent to 'admin' in the database */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="remarks" className="text-right">
               Remarks

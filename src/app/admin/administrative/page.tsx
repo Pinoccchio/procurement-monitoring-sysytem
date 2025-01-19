@@ -5,8 +5,7 @@ import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Search, Upload, Check, X, FileText, AlertCircle } from 'lucide-react'
+import { Search, Check, X, FileText, AlertCircle, ArrowLeft } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -15,15 +14,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { TrackingDialog } from '@/components/layout/procurement/TrackingDialog'
-import { createPurchaseRequest, getPurchaseRequests, updatePurchaseRequestStatus, uploadDocument } from '@/utils/procurement/purchase-requests'
+import { TrackingDialog } from '@/components/layout/admin/TrackingDialog'
+import { supabaseClient } from '@/utils/procurement/purchase-requests'
 import type { PurchaseRequest } from '@/types/procurement/purchase-request'
 
-export default function ProcurementPurchaseRequestsPage() {
+export default function AdministrativePage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [prNumber, setPrNumber] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([])
   const [selectedPR, setSelectedPR] = useState<PurchaseRequest | null>(null)
   const [isTrackingOpen, setIsTrackingOpen] = useState(false)
@@ -39,8 +35,16 @@ export default function ProcurementPurchaseRequestsPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const data = await getPurchaseRequests()
-      setPurchaseRequests(data)
+      const { data, error } = await supabaseClient
+        .from('purchase_requests')
+        .select('*')
+        .eq('status', 'approved')
+        .eq('current_designation', 'admin')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setPurchaseRequests(data || [])
     } catch (error) {
       console.error('Error loading purchase requests:', error)
       setError('Failed to load purchase requests. Please try again.')
@@ -49,67 +53,14 @@ export default function ProcurementPurchaseRequestsPage() {
     }
   }
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0])
-    }
-  }
-
-  const validatePRNumber = (prNumber: string): boolean => {
-    const regex = /^PR-\d{4}-\d{2}-\d{4}$/
-    return regex.test(prNumber)
-  }
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!selectedFile || !prNumber) return
-
-    if (!validatePRNumber(prNumber)) {
-      setError('Invalid PR number format. Please use PR-YYYY-MM-XXXX')
-      return
-    }
-
-    try {
-      setIsSubmitting(true)
-      setError(null)
-      setSuccessMessage(null)
-
-      const documentUrl = await uploadDocument(selectedFile)
-
-      const newPR = await createPurchaseRequest({
-        pr_number: prNumber,
-        department: 'IT', // This should come from the user's department
-        document_url: documentUrl,
-        current_designation: 'procurement'
-      })
-
-      setPrNumber('')
-      setSelectedFile(null)
-
-      await loadPurchaseRequests()
-
-      setSuccessMessage('Purchase request submitted successfully!')
-    } catch (error) {
-      console.error('Error submitting purchase request:', error)
-      if (error instanceof Error) {
-        setError(`Failed to submit purchase request: ${error.message}`)
-      } else {
-        setError('Failed to submit purchase request. Please try again.')
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   const handleApprove = async (pr: PurchaseRequest) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        'approved',
-        pr.current_designation,
-        'Purchase request approved'
-      )
+      await supabaseClient
+        .from('purchase_requests')
+        .update({ status: 'approved', updated_by: 'admin', remarks: 'Purchase request approved by Administrative' })
+        .eq('id', pr.id)
+
       await loadPurchaseRequests()
       setSuccessMessage('Purchase request approved successfully!')
     } catch (error) {
@@ -121,12 +72,10 @@ export default function ProcurementPurchaseRequestsPage() {
   const handleDisapprove = async (pr: PurchaseRequest) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        'disapproved',
-        pr.current_designation,
-        'Purchase request disapproved'
-      )
+      await supabaseClient
+        .from('purchase_requests')
+        .update({ status: 'disapproved', updated_by: 'admin', remarks: 'Purchase request disapproved by Administrative' })
+        .eq('id', pr.id)
       await loadPurchaseRequests()
       setSuccessMessage('Purchase request disapproved successfully!')
     } catch (error) {
@@ -135,6 +84,20 @@ export default function ProcurementPurchaseRequestsPage() {
     }
   }
 
+  const handleReturn = async (pr: PurchaseRequest) => {
+    try {
+      setError(null)
+      await supabaseClient
+        .from('purchase_requests')
+        .update({ status: 'returned', current_designation: 'procurement', updated_by: 'admin', remarks: 'Purchase request returned to Procurement by Administrative' })
+        .eq('id', pr.id)
+      await loadPurchaseRequests()
+      setSuccessMessage('Purchase request returned successfully!')
+    } catch (error) {
+      console.error('Error returning purchase request:', error)
+      setError('Failed to return purchase request. Please try again.')
+    }
+  }
 
   const filteredRequests = purchaseRequests.filter(pr =>
     pr.pr_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -155,7 +118,7 @@ export default function ProcurementPurchaseRequestsPage() {
           transition={{ delay: 0.1, duration: 0.5 }}
           className="text-2xl font-bold text-[#2E8B57]"
         >
-          Purchase Requests
+          Administrative Management
         </motion.h1>
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
@@ -201,65 +164,14 @@ export default function ProcurementPurchaseRequestsPage() {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>New Purchase Request</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="pr-number">PR Number</Label>
-                  <Input
-                    id="pr-number"
-                    value={prNumber}
-                    onChange={(e) => setPrNumber(e.target.value)}
-                    placeholder="Enter PR number (e.g., PR-2023-06-0001)"
-                    className="border-[#2E8B57] focus:ring-[#2E8B57]"
-                    required
-                  />
-                  <p className="text-sm text-gray-500">Format: PR-YYYY-MM-XXXX</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="file-upload">Upload Document</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="file-upload"
-                      type="file"
-                      onChange={handleFileChange}
-                      className="border-[#2E8B57] focus:ring-[#2E8B57]"
-                      required
-                      accept=".pdf"
-                    />
-                    <Button 
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="bg-[#2E8B57] hover:bg-[#1a5235]"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      {isSubmitting ? 'Submitting...' : 'Submit'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.5 }}
         className="space-y-4"
       >
-        <h2 className="text-xl font-bold mb-4 text-[#2E8B57]">Purchase Requests</h2>
+        <h2 className="text-xl font-bold mb-4 text-[#2E8B57]">Forwarded Purchase Requests</h2>
         {isLoading ? (
           <p>Loading purchase requests...</p>
         ) : filteredRequests.length === 0 ? (
-          <p>No purchase requests found.</p>
+          <p>No forwarded purchase requests found.</p>
         ) : (
           filteredRequests.map((pr) => (
             <Card key={pr.id} className="hover:shadow-md transition-shadow">
@@ -284,7 +196,6 @@ export default function ProcurementPurchaseRequestsPage() {
                         <Button 
                           variant="outline" 
                           className="flex-1 md:flex-none border-green-500 text-green-500 hover:bg-green-50"
-                          disabled={pr.status !== 'pending'}
                         >
                           <Check className="h-4 w-4 mr-2" />
                           Approve
@@ -314,7 +225,6 @@ export default function ProcurementPurchaseRequestsPage() {
                         <Button 
                           variant="outline" 
                           className="flex-1 md:flex-none border-red-500 text-red-500 hover:bg-red-50"
-                          disabled={pr.status !== 'pending'}
                         >
                           <X className="h-4 w-4 mr-2" />
                           Disapprove
@@ -334,6 +244,35 @@ export default function ProcurementPurchaseRequestsPage() {
                             variant="destructive"
                           >
                             Confirm Disapproval
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 md:flex-none border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                        >
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Return
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Return Purchase Request</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to return {pr.pr_number} to Procurement?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex justify-end gap-2 mt-4">
+                          <Button variant="outline">Cancel</Button>
+                          <Button 
+                            onClick={() => handleReturn(pr)}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                          >
+                            Confirm Return
                           </Button>
                         </div>
                       </DialogContent>
@@ -372,4 +311,3 @@ export default function ProcurementPurchaseRequestsPage() {
     </motion.div>
   )
 }
-

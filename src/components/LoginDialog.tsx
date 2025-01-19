@@ -68,6 +68,8 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
       onClose()
       if (profile.account_type === 'procurement') {
         router.push('/procurement/dashboard')
+      } else if (profile.account_type === 'admin') {
+        router.push('/admin/dashboard')
       } else {
         router.push(`/dashboard/${profile.account_type}`)
       }

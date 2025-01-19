@@ -122,6 +122,3 @@ export async function uploadDocument(file: File, retries = 3): Promise<string> {
   }
 }
 
-// Export the Supabase client to fix the import error
-export { supabaseClient }
-
