@@ -1,5 +1,5 @@
-export type PRStatus = 'pending' | 'approved' | 'disapproved' | 'forwarded' | 'returned'
-export type PRDesignation = 'procurement' | 'admin' | 'budget' | 'director' | 'bac' | 'supply'
+export type PRStatus = "pending" | "approved" | "disapproved" | "forwarded" | "returned" | "received"
+export type PRDesignation = "procurement" | "admin" | "budget" | "director" | "bac" | "supply"
 
 export interface PurchaseRequest {
   id: string

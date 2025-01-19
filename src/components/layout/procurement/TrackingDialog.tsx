@@ -16,8 +16,9 @@ interface TrackingDialogProps {
 }
 
 export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: TrackingDialogProps) {
-  const [nextDesignation, setNextDesignation] = useState<PRDesignation>(purchaseRequest.current_designation)
-  const [remarks, setRemarks] = useState('')
+  const [action, setAction] = useState<"approve" | "disapprove">("approve")
+  const [nextDesignation, setNextDesignation] = useState<PRDesignation | "">("")
+  const [remarks, setRemarks] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
   const [trackingHistory, setTrackingHistory] = useState<TrackingEntry[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
@@ -25,6 +26,9 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
   useEffect(() => {
     if (isOpen) {
       loadTrackingHistory()
+      setAction("approve")
+      setNextDesignation("")
+      setRemarks("")
     }
   }, [isOpen, purchaseRequest.id])
 
@@ -34,7 +38,7 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
       const history = await getTrackingHistory(purchaseRequest.id)
       setTrackingHistory(history)
     } catch (error) {
-      console.error('Error loading tracking history:', error)
+      console.error("Error loading tracking history:", error)
     } finally {
       setIsLoadingHistory(false)
     }
@@ -43,48 +47,66 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
   const handleUpdate = async () => {
     setIsUpdating(true)
     try {
+      let status: PRStatus = action === "approve" ? "approved" : "disapproved"
+      let designation: PRDesignation = purchaseRequest.current_designation
+
+      if (action === "approve" && nextDesignation) {
+        status = "forwarded"
+        designation = nextDesignation
+      }
+
       await updatePurchaseRequestStatus(
         purchaseRequest.id,
-        'forwarded',
-        nextDesignation,
-        remarks
+        status,
+        designation,
+        action === "approve" && purchaseRequest.status !== "pending" && purchaseRequest.status !== "forwarded"
+          ? remarks
+          : undefined,
       )
       await loadTrackingHistory()
       onUpdate()
     } catch (error) {
-      console.error('Error updating purchase request:', error)
+      console.error("Error updating purchase request:", error)
     } finally {
       setIsUpdating(false)
     }
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+    return new Date(dateString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     })
   }
 
   const getStatusMessage = (entry: TrackingEntry) => {
     switch (entry.status) {
-      case 'approved':
+      case "approved":
         return `PR Approved by ${entry.designation}`
-      case 'disapproved':
+      case "disapproved":
         return `PR Disapproved by ${entry.designation}`
-      case 'forwarded':
+      case "forwarded":
         return `PR Forwarded to ${entry.designation}`
-      case 'pending':
+      case "pending":
         return `PR Created and assigned to ${entry.designation}`
-      case 'returned':
+      case "returned":
         return `PR Returned to ${entry.designation}`
+      case "received":
+        return `PR Received by ${entry.designation}`
       default:
         return `PR Status updated to ${entry.status} by ${entry.designation}`
     }
   }
+
+  const showForwardAndRemarks =
+    purchaseRequest.status !== "disapproved" &&
+    purchaseRequest.status !== "pending" &&
+    purchaseRequest.status !== "forwarded" &&
+    action === "approve"
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -106,7 +128,7 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
 
           <div className="space-y-2">
             <h3 className="font-semibold text-lg">Tracking Information</h3>
-            <div className="bg-gray-100 rounded-lg p-4 space-y-4">
+            <div className="bg-gray-100 rounded-lg p-4 space-y-4 max-h-60 overflow-y-auto">
               {isLoadingHistory ? (
                 <p className="text-center text-gray-500">Loading tracking history...</p>
               ) : trackingHistory.length === 0 ? (
@@ -118,15 +140,9 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
                     <div key={entry.id} className="relative pl-8 pb-4">
                       <div className="absolute left-0 w-4 h-4 rounded-full bg-[#2E8B57] border-4 border-white" />
                       <div className="space-y-1">
-                        <div className="text-sm text-gray-600">
-                          {formatDate(entry.created_at)}
-                        </div>
-                        <div className="font-medium">
-                          {getStatusMessage(entry)}
-                        </div>
-                        {entry.notes && (
-                          <div className="text-sm text-gray-600">{entry.notes}</div>
-                        )}
+                        <div className="text-sm text-gray-600">{formatDate(entry.created_at)}</div>
+                        <div className="font-medium">{getStatusMessage(entry)}</div>
+                        {entry.notes && <div className="text-sm text-gray-600">{entry.notes}</div>}
                       </div>
                     </div>
                   ))}
@@ -136,41 +152,73 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
           </div>
 
           <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="next-designation">Forward to</Label>
-              <Select value={nextDesignation} onValueChange={(value: PRDesignation) => setNextDesignation(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select next designation" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="procurement">Procurement</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="budget">Budget</SelectItem>
-                  <SelectItem value="director">Director</SelectItem>
-                  <SelectItem value="bac">BAC</SelectItem>
-                  <SelectItem value="supply">Supply</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {purchaseRequest.status !== "forwarded" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="action">Action</Label>
+                  <Select value={action} onValueChange={(value: "approve" | "disapprove") => setAction(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approve">Approve</SelectItem>
+                      <SelectItem value="disapprove">Disapprove</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="remarks">Remarks</Label>
-              <Textarea
-                id="remarks"
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                placeholder="Enter remarks..."
-              />
-            </div>
+                {showForwardAndRemarks && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="next-designation">Forward to (Optional)</Label>
+                      <Select
+                        value={nextDesignation}
+                        onValueChange={(value: PRDesignation) => setNextDesignation(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select next designation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="procurement">Procurement</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="budget">Budget</SelectItem>
+                          <SelectItem value="director">Director</SelectItem>
+                          <SelectItem value="bac">BAC</SelectItem>
+                          <SelectItem value="supply">Supply</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="remarks">Remarks</Label>
+                      <Textarea
+                        id="remarks"
+                        value={remarks}
+                        onChange={(e) => setRemarks(e.target.value)}
+                        placeholder="Enter remarks..."
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {purchaseRequest.status === "forwarded" ? "Close" : "Cancel"}
           </Button>
-          <Button onClick={handleUpdate} disabled={isUpdating}>
-            {isUpdating ? 'Updating...' : 'Forward'}
-          </Button>
+          {purchaseRequest.status !== "forwarded" && (
+            <Button onClick={handleUpdate} disabled={isUpdating}>
+              {isUpdating
+                ? "Updating..."
+                : action === "approve"
+                  ? nextDesignation
+                    ? "Approve & Forward"
+                    : "Approve"
+                  : "Disapprove"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
