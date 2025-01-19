@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,11 +15,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { TrackingDialog } from '@/components/layout/procurement/TrackingDialog'
+import { createPurchaseRequest, getPurchaseRequests, updatePurchaseRequestStatus, uploadDocument } from '@/utils/procurement/purchase-requests'
+import type { PurchaseRequest } from '@/types/procurement/purchase-request'
 
 export default function ProcurementPurchaseRequestsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [prNumber, setPrNumber] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([])
+  const [selectedPR, setSelectedPR] = useState<PurchaseRequest | null>(null)
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    loadPurchaseRequests()
+  }, [])
+
+  async function loadPurchaseRequests() {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const data = await getPurchaseRequests()
+      setPurchaseRequests(data)
+    } catch (error) {
+      console.error('Error loading purchase requests:', error)
+      setError('Failed to load purchase requests. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -27,27 +55,95 @@ export default function ProcurementPurchaseRequestsPage() {
     }
   }
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const validatePRNumber = (prNumber: string): boolean => {
+    const regex = /^PR-\d{4}-\d{2}-\d{4}$/
+    return regex.test(prNumber)
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    // Handle form submission
-    console.log('Submitted:', { prNumber, selectedFile })
+    if (!selectedFile || !prNumber) return
+
+    if (!validatePRNumber(prNumber)) {
+      setError('Invalid PR number format. Please use PR-YYYY-MM-XXXX')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+      setSuccessMessage(null)
+
+      // Upload document first
+      const documentUrl = await uploadDocument(selectedFile)
+
+      // Create purchase request
+      const newPR = await createPurchaseRequest({
+        pr_number: prNumber,
+        department: 'IT', // This should come from the user's department
+        document_url: documentUrl,
+        current_designation: 'procurement'
+      })
+
+      // Reset form
+      setPrNumber('')
+      setSelectedFile(null)
+
+      // Reload purchase requests
+      await loadPurchaseRequests()
+
+      // Show success message
+      setSuccessMessage('Purchase request submitted successfully!')
+    } catch (error) {
+      console.error('Error submitting purchase request:', error)
+      if (error instanceof Error) {
+        setError(`Failed to submit purchase request: ${error.message}`)
+      } else {
+        setError('Failed to submit purchase request. Please try again.')
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleApprove = (id: string) => {
-    // Handle approve logic
-    console.log('Approved:', id)
+  const handleApprove = async (pr: PurchaseRequest) => {
+    try {
+      setError(null)
+      await updatePurchaseRequestStatus(
+        pr.id,
+        'approved',
+        pr.current_designation,
+        'Purchase request approved'
+      )
+      await loadPurchaseRequests()
+      setSuccessMessage('Purchase request approved successfully!')
+    } catch (error) {
+      console.error('Error approving purchase request:', error)
+      setError('Failed to approve purchase request. Please try again.')
+    }
   }
 
-  const handleDisapprove = (id: string) => {
-    // Handle disapprove logic
-    console.log('Disapproved:', id)
+  const handleDisapprove = async (pr: PurchaseRequest) => {
+    try {
+      setError(null)
+      await updatePurchaseRequestStatus(
+        pr.id,
+        'disapproved',
+        pr.current_designation,
+        'Purchase request disapproved'
+      )
+      await loadPurchaseRequests()
+      setSuccessMessage('Purchase request disapproved successfully!')
+    } catch (error) {
+      console.error('Error disapproving purchase request:', error)
+      setError('Failed to disapprove purchase request. Please try again.')
+    }
   }
 
-  const purchaseRequests = [
-    { id: '1', prNumber: 'PR NO- 2025-01-0428', department: 'IT', date: '2025-03-08' },
-    { id: '2', prNumber: 'PR NO- 2025-01-0432', department: 'HR', date: '2025-03-15' },
-    { id: '3', prNumber: 'PR NO- 2025-01-0521', department: 'Finance', date: '2025-03-22' },
-  ]
+  const filteredRequests = purchaseRequests.filter(pr =>
+    pr.pr_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pr.department.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <motion.div 
@@ -76,11 +172,35 @@ export default function ProcurementPurchaseRequestsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 border-[#2E8B57] focus:ring-[#2E8B57]" 
-            placeholder="Search" 
+            placeholder="Search PR number or department" 
             type="search"
           />
         </motion.div>
       </div>
+
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4"
+          role="alert"
+        >
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </motion.div>
+      )}
+
+      {successMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4"
+          role="alert"
+        >
+          <p className="font-bold">Success</p>
+          <p>{successMessage}</p>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ y: 20, opacity: 0 }}
@@ -100,9 +220,11 @@ export default function ProcurementPurchaseRequestsPage() {
                     id="pr-number"
                     value={prNumber}
                     onChange={(e) => setPrNumber(e.target.value)}
-                    placeholder="Enter PR number"
+                    placeholder="Enter PR number (e.g., PR-2023-06-0001)"
                     className="border-[#2E8B57] focus:ring-[#2E8B57]"
+                    required
                   />
+                  <p className="text-sm text-gray-500">Format: PR-YYYY-MM-XXXX</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="file-upload">Upload Document</Label>
@@ -112,13 +234,16 @@ export default function ProcurementPurchaseRequestsPage() {
                       type="file"
                       onChange={handleFileChange}
                       className="border-[#2E8B57] focus:ring-[#2E8B57]"
+                      required
+                      accept=".pdf"
                     />
                     <Button 
                       type="submit"
+                      disabled={isSubmitting}
                       className="bg-[#2E8B57] hover:bg-[#1a5235]"
                     >
                       <Upload className="h-4 w-4 mr-2" />
-                      Submit
+                      {isSubmitting ? 'Submitting...' : 'Submit'}
                     </Button>
                   </div>
                 </div>
@@ -135,90 +260,119 @@ export default function ProcurementPurchaseRequestsPage() {
         className="space-y-4"
       >
         <h2 className="text-xl font-bold mb-4 text-[#2E8B57]">Purchase Requests</h2>
-        {purchaseRequests.map((pr) => (
-          <Card key={pr.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-[#2E8B57]" />
-                    <h3 className="font-semibold text-lg">{pr.prNumber}</h3>
+        {isLoading ? (
+          <p>Loading purchase requests...</p>
+        ) : filteredRequests.length === 0 ? (
+          <p>No purchase requests found.</p>
+        ) : (
+          filteredRequests.map((pr) => (
+            <Card key={pr.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-[#2E8B57]" />
+                      <h3 className="font-semibold text-lg">{pr.pr_number}</h3>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <p>Department: {pr.department}</p>
+                      <p>Date: {new Date(pr.created_at).toLocaleDateString()}</p>
+                      <p>Status: {pr.status}</p>
+                      <p>Current Designation: {pr.current_designation}</p>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    <p>Department: {pr.department}</p>
-                    <p>Date: {pr.date}</p>
+
+                  <div className="flex gap-2 w-full md:w-auto">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 md:flex-none border-green-500 text-green-500 hover:bg-green-50"
+                          disabled={pr.status !== 'pending'}
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Approve
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Approve Purchase Request</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to approve {pr.pr_number}?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex justify-end gap-2 mt-4">
+                          <Button variant="outline">Cancel</Button>
+                          <Button 
+                            onClick={() => handleApprove(pr)}
+                            className="bg-green-500 hover:bg-green-600"
+                          >
+                            Confirm Approval
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 md:flex-none border-red-500 text-red-500 hover:bg-red-50"
+                          disabled={pr.status !== 'pending'}
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Disapprove
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Disapprove Purchase Request</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to disapprove {pr.pr_number}?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex justify-end gap-2 mt-4">
+                          <Button variant="outline">Cancel</Button>
+                          <Button 
+                            onClick={() => handleDisapprove(pr)}
+                            variant="destructive"
+                          >
+                            Confirm Disapproval
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 md:flex-none"
+                      onClick={() => {
+                        setSelectedPR(pr)
+                        setIsTrackingOpen(true)
+                      }}
+                    >
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      View Details
+                    </Button>
                   </div>
                 </div>
-
-                <div className="flex gap-2 w-full md:w-auto">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 md:flex-none border-green-500 text-green-500 hover:bg-green-50"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Approve
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Approve Purchase Request</DialogTitle>
-                        <DialogDescription>
-                          Are you sure you want to approve {pr.prNumber}?
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="outline">Cancel</Button>
-                        <Button 
-                          onClick={() => handleApprove(pr.id)}
-                          className="bg-green-500 hover:bg-green-600"
-                        >
-                          Confirm Approval
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 md:flex-none border-red-500 text-red-500 hover:bg-red-50"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Disapprove
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Disapprove Purchase Request</DialogTitle>
-                        <DialogDescription>
-                          Are you sure you want to disapprove {pr.prNumber}?
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="outline">Cancel</Button>
-                        <Button 
-                          onClick={() => handleDisapprove(pr.id)}
-                          variant="destructive"
-                        >
-                          Confirm Disapproval
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  <Button variant="outline" className="flex-1 md:flex-none">
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </motion.div>
+
+      {selectedPR && (
+        <TrackingDialog
+          isOpen={isTrackingOpen}
+          onClose={() => {
+            setIsTrackingOpen(false)
+            setSelectedPR(null)
+          }}
+          purchaseRequest={selectedPR}
+          onUpdate={loadPurchaseRequests}
+        />
+      )}
     </motion.div>
   )
 }

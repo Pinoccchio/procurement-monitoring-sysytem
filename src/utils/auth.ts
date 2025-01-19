@@ -113,6 +113,10 @@ export async function signIn(email: string, password: string) {
       throw new Error(`Authentication error: ${error.message}`)
     }
 
+    if (!data.user) {
+      throw new Error('No user returned from sign in')
+    }
+
     // Fetch the user's complete profile from the users table
     const { data: userData, error: userError } = await supabase
       .from('users')
@@ -161,6 +165,10 @@ export async function getUser(): Promise<User | null> {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError) {
+      if (userError.message === 'Auth session missing!') {
+        console.log('No active session found')
+        return null
+      }
       console.error('Error fetching auth user:', userError)
       return null
     }

@@ -1,4 +1,4 @@
-export type UserRole = 'end-user' | 'procurement' | 'budget' | 'director' | 'bac' | 'supply'
+export type UserRole = 'end-user' | 'procurement' | 'budget' | 'director' | 'bac' | 'supply' | 'admin'
 
 export interface User {
   id: string
@@ -9,4 +9,3 @@ export interface User {
   created_at: string
   updated_at: string
 }
-

@@ -1,5 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { SessionCheck } from '@/components/SessionCheck'
 
 export const metadata: Metadata = {
   title: 'Procurement Monitoring System',
@@ -20,7 +21,10 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/pms-logo.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        <SessionCheck />
+        {children}
+      </body>
     </html>
   )
 }

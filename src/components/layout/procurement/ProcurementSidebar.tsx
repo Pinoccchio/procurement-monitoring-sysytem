@@ -5,7 +5,8 @@ import { LayoutGrid, FileText, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { signOut } from '@/utils/auth'
 
 interface ProcurementSidebarProps {
   isOpen: boolean
@@ -14,6 +15,16 @@ interface ProcurementSidebarProps {
 
 export function ProcurementSidebar({ isOpen, className }: ProcurementSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
     <motion.aside 
@@ -69,6 +80,7 @@ export function ProcurementSidebar({ isOpen, className }: ProcurementSidebarProp
           <Button 
             variant="ghost" 
             className="w-full justify-start text-[#2E8B57] hover:text-white hover:bg-[#2E8B57] transition-colors duration-300"
+            onClick={handleSignOut}
           >
             <LogOut className="mr-3 h-5 w-5" />
             Sign Out

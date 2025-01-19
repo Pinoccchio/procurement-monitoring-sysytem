@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
@@ -9,12 +10,29 @@ import { ChevronRight, BarChart2, Clock, Users, FileText, ShieldCheck, Search, M
 import { LoginDialog } from '@/components/LoginDialog'
 import { SignUpDialog } from '@/components/SignupDialog'
 import { motion } from 'framer-motion'
+import { getUser } from '@/utils/auth'
 
 type IconProps = React.ComponentProps<'svg'>;
 
 export default function HomePage() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isSignUpOpen, setIsSignUpOpen] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const user = await getUser()
+      if (user) {
+        if (user.account_type === 'procurement') {
+          router.push('/procurement/dashboard')
+        } else {
+          router.push(`/dashboard/${user.account_type}`)
+        }
+      }
+    }
+
+    checkSession()
+  }, [router])
 
   const showLogin = () => {
     setIsSignUpOpen(false);
