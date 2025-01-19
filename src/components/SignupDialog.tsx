@@ -149,6 +149,7 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                     </SelectGroup>
                     <SelectGroup>
                       <SelectLabel>Administration</SelectLabel>
+                      <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="budget">Budget Officer</SelectItem>
                     </SelectGroup>
                   </SelectContent>

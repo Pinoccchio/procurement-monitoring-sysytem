@@ -22,7 +22,7 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [userType, setUserType] = useState<string>('')
-  const [isFormValid, setIsFormValid] = useState(false) // Added state for form validity
+  const [isFormValid, setIsFormValid] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
   }, [isOpen, onClose])
 
   useEffect(() => {
-    setIsFormValid(!!userType && !!email && !!password) // Added useEffect to check form validity
+    setIsFormValid(!!userType && !!email && !!password)
   }, [userType, email, password])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -59,7 +59,6 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
     try {
       const { profile } = await signIn(email, password)
       
-      // Check if the signed-in user's account type matches the selected user type
       if (profile.account_type !== userType) {
         setError('Selected user type does not match your account')
         setIsLoading(false)
@@ -128,6 +127,7 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Administration</SelectLabel>
+                    <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="budget">Budget Officer</SelectItem>
                   </SelectGroup>
                 </SelectContent>
