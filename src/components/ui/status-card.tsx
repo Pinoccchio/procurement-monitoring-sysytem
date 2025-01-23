@@ -1,11 +1,11 @@
-import { TypeIcon as type, LucideIcon } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { LucideIcon } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface StatusCardProps {
-  title: string
-  count: number
-  type: "pending" | "approved" | "disapproved" | "completed"
-  icon?: LucideIcon
+  title: string;
+  count: number;
+  type: "pending" | "approved" | "disapproved" | "completed";
+  icon?: LucideIcon;
 }
 
 export function StatusCard({ title, count, type, icon: Icon }: StatusCardProps) {
@@ -28,6 +28,5 @@ export function StatusCard({ title, count, type, icon: Icon }: StatusCardProps) 
         <p className={`${color} text-lg font-semibold`}>{count}</p>
       </CardContent>
     </Card>
-  )
+  );
 }
-

@@ -1,13 +1,21 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ChevronRight, Eye, EyeOff, X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { signIn } from '@/utils/auth'
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { ChevronRight, Eye, EyeOff, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { signIn } from "@/utils/auth"
 
 interface LoginDialogProps {
   isOpen: boolean
@@ -19,25 +27,25 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [userType, setUserType] = useState<string>('')
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [userType, setUserType] = useState<string>("")
   const [isFormValid, setIsFormValid] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onClose()
       }
     }
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
+      document.addEventListener("keydown", handleEscape)
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape)
+      document.removeEventListener("keydown", handleEscape)
     }
   }, [isOpen, onClose])
 
@@ -51,30 +59,30 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
     setError(null)
 
     if (!userType) {
-      setError('Please select a user type')
+      setError("Please select a user type")
       setIsLoading(false)
       return
     }
 
     try {
       const { profile } = await signIn(email, password)
-      
+
       if (profile.account_type !== userType) {
-        setError('Selected user type does not match your account')
+        setError("Selected user type does not match your account")
         setIsLoading(false)
         return
       }
 
       onClose()
-      if (profile.account_type === 'procurement') {
-        router.push('/procurement/dashboard')
-      } else if (profile.account_type === 'admin') {
-        router.push('/admin/dashboard')
+      if (profile.account_type === "procurement") {
+        router.push("/procurement/dashboard")
+      } else if (profile.account_type === "admin") {
+        router.push("/admin/dashboard")
       } else {
         router.push(`/dashboard/${profile.account_type}`)
       }
-    } catch (err) {
-      setError('Invalid email or password')
+    } catch (error) {
+      setError("Invalid email or password")
     } finally {
       setIsLoading(false)
     }
@@ -108,7 +116,7 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
           </button>
 
           <h2 className="text-2xl font-bold text-center mb-6 text-[#2E8B57]">Sign In</h2>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Select onValueChange={(value) => setUserType(value)} required>
@@ -135,24 +143,24 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
-              <Input 
-                name="email" 
-                type="email" 
-                placeholder="Email" 
-                required 
+              <Input
+                name="email"
+                type="email"
+                placeholder="Email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
               />
             </div>
-            
+
             <div className="relative">
-              <Input 
+              <Input
                 name="password"
-                type={showPassword ? "text" : "password"} 
-                placeholder="Password" 
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pr-10 border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0"
@@ -164,11 +172,7 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
                 className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
 
@@ -184,7 +188,11 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </div>
                     <div className="ml-3">
@@ -195,22 +203,38 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
               )}
             </AnimatePresence>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className={`w-full ${
                 !isFormValid
-                  ? 'bg-[#2E8B57]/50 cursor-not-allowed'
+                  ? "bg-[#2E8B57]/50 cursor-not-allowed"
                   : isLoading
-                  ? 'bg-[#2E8B57]/70'
-                  : 'bg-[#2E8B57] hover:bg-[#1a5235]'
-              } text-white font-semibold py-2 px-4 rounded-md transition-all duration-300 ease-in-out transform hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2E8B57] focus:ring-offset-2`} 
+                    ? "bg-[#2E8B57]/70"
+                    : "bg-[#2E8B57] hover:bg-[#1a5235]"
+              } text-white font-semibold py-2 px-4 rounded-md transition-all duration-300 ease-in-out transform hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2E8B57] focus:ring-offset-2`}
               disabled={!isFormValid || isLoading}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Signing in...
                 </div>
@@ -223,12 +247,12 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
             </Button>
 
             <p className="text-center text-sm text-slate-600 mt-4">
-              Don't have an account?{' '}
-              <button 
+              Don&apos;t have an account?{" "}
+              <button
                 onClick={() => {
-                  onClose();
-                  onShowSignUp();
-                }} 
+                  onClose()
+                  onShowSignUp()
+                }}
                 className="font-medium text-[#2E8B57] hover:text-[#1a5235] transition-colors"
               >
                 Sign up

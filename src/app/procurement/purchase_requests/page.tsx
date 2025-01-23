@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Search, Upload, Check, X, FileText, AlertCircle } from 'lucide-react'
+import { Search, Upload, Check, X, FileText, AlertCircle } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -15,13 +15,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { TrackingDialog } from '@/components/layout/procurement/TrackingDialog'
-import { createPurchaseRequest, getPurchaseRequests, updatePurchaseRequestStatus, uploadDocument } from '@/utils/procurement/purchase-requests'
-import type { PurchaseRequest } from '@/types/procurement/purchase-request'
+import { TrackingDialog } from "@/components/layout/procurement/TrackingDialog"
+import {
+  createPurchaseRequest,
+  getPurchaseRequests,
+  updatePurchaseRequestStatus,
+  uploadDocument,
+} from "@/utils/procurement/purchase-requests"
+import type { PurchaseRequest } from "@/types/procurement/purchase-request"
 
 export default function ProcurementPurchaseRequestsPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [prNumber, setPrNumber] = useState('')
+  const [searchQuery, setSearchQuery] = useState("")
+  const [prNumber, setPrNumber] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([])
@@ -42,8 +47,8 @@ export default function ProcurementPurchaseRequestsPage() {
       const data = await getPurchaseRequests()
       setPurchaseRequests(data)
     } catch (error) {
-      console.error('Error loading purchase requests:', error)
-      setError('Failed to load purchase requests. Please try again.')
+      console.error("Error loading purchase requests:", error)
+      setError("Failed to load purchase requests. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -65,7 +70,7 @@ export default function ProcurementPurchaseRequestsPage() {
     if (!selectedFile || !prNumber) return
 
     if (!validatePRNumber(prNumber)) {
-      setError('Invalid PR number format. Please use PR-YYYY-MM-XXXX')
+      setError("Invalid PR number format. Please use PR-YYYY-MM-XXXX")
       return
     }
 
@@ -76,25 +81,25 @@ export default function ProcurementPurchaseRequestsPage() {
 
       const documentUrl = await uploadDocument(selectedFile)
 
-      const newPR = await createPurchaseRequest({
+      await createPurchaseRequest({
         pr_number: prNumber,
-        department: 'IT', // This should come from the user's department
+        department: "IT", // This should come from the user's department
         document_url: documentUrl,
-        current_designation: 'procurement'
+        current_designation: "procurement",
       })
 
-      setPrNumber('')
+      setPrNumber("")
       setSelectedFile(null)
 
       await loadPurchaseRequests()
 
-      setSuccessMessage('Purchase request submitted successfully!')
+      setSuccessMessage("Purchase request submitted successfully!")
     } catch (error) {
-      console.error('Error submitting purchase request:', error)
+      console.error("Error submitting purchase request:", error)
       if (error instanceof Error) {
         setError(`Failed to submit purchase request: ${error.message}`)
       } else {
-        setError('Failed to submit purchase request. Please try again.')
+        setError("Failed to submit purchase request. Please try again.")
       }
     } finally {
       setIsSubmitting(false)
@@ -104,52 +109,37 @@ export default function ProcurementPurchaseRequestsPage() {
   const handleApprove = async (pr: PurchaseRequest) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        'approved',
-        pr.current_designation,
-        'Purchase request approved'
-      )
+      await updatePurchaseRequestStatus(pr.id, "approved", pr.current_designation, "Purchase request approved")
       await loadPurchaseRequests()
-      setSuccessMessage('Purchase request approved successfully!')
+      setSuccessMessage("Purchase request approved successfully!")
     } catch (error) {
-      console.error('Error approving purchase request:', error)
-      setError('Failed to approve purchase request. Please try again.')
+      console.error("Error approving purchase request:", error)
+      setError("Failed to approve purchase request. Please try again.")
     }
   }
 
   const handleDisapprove = async (pr: PurchaseRequest) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        'disapproved',
-        pr.current_designation,
-        'Purchase request disapproved'
-      )
+      await updatePurchaseRequestStatus(pr.id, "disapproved", pr.current_designation, "Purchase request disapproved")
       await loadPurchaseRequests()
-      setSuccessMessage('Purchase request disapproved successfully!')
+      setSuccessMessage("Purchase request disapproved successfully!")
     } catch (error) {
-      console.error('Error disapproving purchase request:', error)
-      setError('Failed to disapprove purchase request. Please try again.')
+      console.error("Error disapproving purchase request:", error)
+      setError("Failed to disapprove purchase request. Please try again.")
     }
   }
 
-
-  const filteredRequests = purchaseRequests.filter(pr =>
-    pr.pr_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pr.department.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRequests = purchaseRequests.filter(
+    (pr) =>
+      pr.pr_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pr.department.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <motion.h1 
+        <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.5 }}
@@ -157,18 +147,18 @@ export default function ProcurementPurchaseRequestsPage() {
         >
           Purchase Requests
         </motion.h1>
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
           className="relative w-full md:w-[300px]"
         >
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2E8B57]" />
-          <Input 
+          <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 border-[#2E8B57] focus:ring-[#2E8B57]" 
-            placeholder="Search PR number or department" 
+            className="pl-10 border-[#2E8B57] focus:ring-[#2E8B57]"
+            placeholder="Search PR number or department"
             type="search"
           />
         </motion.div>
@@ -233,13 +223,9 @@ export default function ProcurementPurchaseRequestsPage() {
                       required
                       accept=".pdf"
                     />
-                    <Button 
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="bg-[#2E8B57] hover:bg-[#1a5235]"
-                    >
+                    <Button type="submit" disabled={isSubmitting} className="bg-[#2E8B57] hover:bg-[#1a5235]">
                       <Upload className="h-4 w-4 mr-2" />
-                      {isSubmitting ? 'Submitting...' : 'Submit'}
+                      {isSubmitting ? "Submitting..." : "Submit"}
                     </Button>
                   </div>
                 </div>
@@ -281,10 +267,10 @@ export default function ProcurementPurchaseRequestsPage() {
                   <div className="flex gap-2 w-full md:w-auto">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="flex-1 md:flex-none border-green-500 text-green-500 hover:bg-green-50"
-                          disabled={pr.status !== 'pending'}
+                          disabled={pr.status !== "pending"}
                         >
                           <Check className="h-4 w-4 mr-2" />
                           Approve
@@ -293,16 +279,11 @@ export default function ProcurementPurchaseRequestsPage() {
                       <DialogContent>
                         <DialogHeader>
                           <DialogTitle>Approve Purchase Request</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to approve {pr.pr_number}?
-                          </DialogDescription>
+                          <DialogDescription>Are you sure you want to approve {pr.pr_number}?</DialogDescription>
                         </DialogHeader>
                         <div className="flex justify-end gap-2 mt-4">
                           <Button variant="outline">Cancel</Button>
-                          <Button 
-                            onClick={() => handleApprove(pr)}
-                            className="bg-green-500 hover:bg-green-600"
-                          >
+                          <Button onClick={() => handleApprove(pr)} className="bg-green-500 hover:bg-green-600">
                             Confirm Approval
                           </Button>
                         </div>
@@ -311,10 +292,10 @@ export default function ProcurementPurchaseRequestsPage() {
 
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="flex-1 md:flex-none border-red-500 text-red-500 hover:bg-red-50"
-                          disabled={pr.status !== 'pending'}
+                          disabled={pr.status !== "pending"}
                         >
                           <X className="h-4 w-4 mr-2" />
                           Disapprove
@@ -323,24 +304,19 @@ export default function ProcurementPurchaseRequestsPage() {
                       <DialogContent>
                         <DialogHeader>
                           <DialogTitle>Disapprove Purchase Request</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to disapprove {pr.pr_number}?
-                          </DialogDescription>
+                          <DialogDescription>Are you sure you want to disapprove {pr.pr_number}?</DialogDescription>
                         </DialogHeader>
                         <div className="flex justify-end gap-2 mt-4">
                           <Button variant="outline">Cancel</Button>
-                          <Button 
-                            onClick={() => handleDisapprove(pr)}
-                            variant="destructive"
-                          >
+                          <Button onClick={() => handleDisapprove(pr)} variant="destructive">
                             Confirm Disapproval
                           </Button>
                         </div>
                       </DialogContent>
                     </Dialog>
 
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="flex-1 md:flex-none"
                       onClick={() => {
                         setSelectedPR(pr)

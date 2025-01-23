@@ -1,4 +1,4 @@
-import type { CreatePurchaseRequest, PurchaseRequest, TrackingEntry } from '@/types/procurement/purchase-request'
+import type { CreatePurchaseRequest, PurchaseRequest } from '@/types/procurement/purchase-request'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
