@@ -81,7 +81,7 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
       } else {
         router.push(`/dashboard/${profile.account_type}`)
       }
-    } catch (error) {
+    } catch {
       setError("Invalid email or password")
     } finally {
       setIsLoading(false)
