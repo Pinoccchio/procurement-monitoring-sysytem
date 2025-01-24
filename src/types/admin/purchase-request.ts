@@ -1,12 +1,6 @@
 export type PRStatus = "pending" | "approved" | "disapproved" | "returned" | "forwarded" | "received"
 export type PRDesignation = "procurement" | "admin" | "budget" | "director" | "bac" | "supply"
 
-export interface CreatePurchaseRequest {
-  pr_number: string
-  description: string
-  current_designation: PRDesignation
-}
-
 export interface PurchaseRequest {
   id: string
   pr_number: string
@@ -25,5 +19,13 @@ export type TrackingEntry = {
   designation: PRDesignation
   notes: string
   created_at: string
+}
+
+export interface AdminUser {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  role: string
 }
 

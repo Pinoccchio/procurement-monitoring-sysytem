@@ -5,6 +5,7 @@ import type {
   PRStatus,
   PRDesignation,
 } from "@/types/procurement/purchase-request"
+import type { User } from "@/types/procurement/user"
 import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -14,7 +15,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables")
 }
 
-const supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
 
 export async function createPurchaseRequest(data: CreatePurchaseRequest): Promise<PurchaseRequest> {
   try {
@@ -23,9 +24,8 @@ export async function createPurchaseRequest(data: CreatePurchaseRequest): Promis
       .insert([
         {
           pr_number: data.pr_number,
-          department: data.department,
+          description: data.description,
           current_designation: data.current_designation,
-          document_url: data.document_url,
         },
       ])
       .select()
@@ -92,56 +92,56 @@ export async function updatePurchaseRequestStatus(
   if (trackingError) throw trackingError
 }
 
-export async function uploadDocument(file: File, retries = 3): Promise<string> {
+export async function getTrackingHistory(purchaseRequestId?: string): Promise<TrackingEntry[]> {
   try {
-    const fileExt = file.name.split(".").pop()
-    const fileName = `${Math.random()}.${fileExt}`
-    const filePath = `documents/${fileName}`
-
-    const { data, error } = await supabaseClient.storage.from("purchase-request-documents").upload(filePath, file)
-
-    if (error) {
-      console.error("Supabase Storage upload error:", error)
-      if (retries > 0) {
-        console.log(`Retrying upload... (${retries} attempts left)`)
-        return uploadDocument(file, retries - 1)
-      }
-      throw error
-    }
-
-    if (!data) {
-      throw new Error("No data returned from Supabase Storage upload")
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabaseClient.storage.from("purchase-request-documents").getPublicUrl(filePath)
-
-    return publicUrl
-  } catch (error) {
-    console.error("Error uploading document:", error)
-
-    // Fallback: Return a placeholder URL if Supabase Storage is unavailable
-    return `https://placeholder-url.com/${file.name}`
-  }
-}
-
-export async function getTrackingHistory(purchaseRequestId: string): Promise<TrackingEntry[]> {
-  try {
-    const { data, error } = await supabaseClient
+    let query = supabaseClient
       .from("tracking_history")
-      .select("*")
-      .eq("pr_id", purchaseRequestId)
+      .select(`
+        *,
+        purchase_requests (pr_number)
+      `)
       .order("created_at", { ascending: false })
+
+    if (purchaseRequestId) {
+      query = query.eq("pr_id", purchaseRequestId)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
-    return data || []
+    return data.map((entry) => ({
+      ...entry,
+      pr_number: entry.purchase_requests.pr_number,
+    })) as TrackingEntry[]
   } catch (error) {
     console.error("Error fetching tracking history:", error)
     throw new Error("Failed to fetch tracking history")
   }
 }
 
-export { supabaseClient }
+export async function getUserProfile(): Promise<User | null> {
+  try {
+    const {
+      data: { user },
+    } = await supabaseClient.auth.getUser()
+
+    if (!user) {
+      throw new Error("No user found")
+    }
+
+    const { data, error } = await supabaseClient
+      .from("users")
+      .select("id, first_name, last_name, email")
+      .eq("id", user.id)
+      .single()
+
+    if (error) throw error
+
+    return data
+  } catch (error) {
+    console.error("Error fetching user profile:", error)
+    throw new Error("Failed to fetch user profile")
+  }
+}
 
