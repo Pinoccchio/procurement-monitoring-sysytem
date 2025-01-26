@@ -78,7 +78,20 @@ export function LoginDialog({ isOpen, onClose, onShowSignUp }: LoginDialogProps)
         router.push("/procurement/dashboard")
       } else if (profile.account_type === "admin") {
         router.push("/admin/administrative")
-      } else {
+      } else if (profile.account_type === "director") {
+        router.push("/director/director")
+      } else if (profile.account_type === "bac") {
+        router.push("/bac/bac")
+      } else if (profile.account_type === "budget") {
+        router.push("/budget/budget")
+      } 
+      else if (profile.account_type === "supply") {
+        router.push("/supply/supply")
+      } 
+      else if (profile.account_type === "end-user") {
+        router.push("/end-user/purchase-requests")
+      } 
+      else {
         router.push(`/dashboard/${profile.account_type}`)
       }
     } catch {

@@ -4,15 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { ChevronRight, Eye, EyeOff, X, CheckCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { signUp, type UserRole } from "@/utils/auth"
@@ -30,7 +21,7 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
     email: "",
     password: "",
     confirmPassword: "",
-    role: "" as UserRole,
+    role: "end-user" as UserRole,
   })
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -63,13 +54,6 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
     }))
   }
 
-  const handleRoleChange = (value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      role: value as UserRole,
-    }))
-  }
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
@@ -96,7 +80,9 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
       // Redirect to dashboard after 3 seconds
       setTimeout(() => {
         onClose()
-        router.push(`/dashboard/${profile.role}`)
+        if (profile.account_type === "end-user") {
+          router.push("/end-user/purchase-requests")
+        }
       }, 3000)
     } catch (err) {
       console.error("Signup error:", err)
@@ -138,32 +124,6 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
             <h2 className="text-2xl font-bold text-center mb-6 text-[#2E8B57]">Create Account</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Select onValueChange={handleRoleChange} required>
-                  <SelectTrigger className="w-full border-slate-200 focus:ring-[#2E8B57] focus:ring-offset-0">
-                    <SelectValue placeholder="Select User Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>General Users</SelectLabel>
-                      <SelectItem value="end-user">End User</SelectItem>
-                      <SelectItem value="procurement">Procurement Officer</SelectItem>
-                      <SelectItem value="supply">Supply Officer</SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Management</SelectLabel>
-                      <SelectItem value="director">Director</SelectItem>
-                      <SelectItem value="bac">BAC Member</SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Administration</SelectLabel>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="budget">Budget Officer</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Input
@@ -278,7 +238,7 @@ export function SignUpDialog({ isOpen, onClose, onShowLogin }: SignUpDialogProps
                 className={`w-full ${
                   isLoading ? "bg-[#2E8B57]/70" : "bg-[#2E8B57] hover:bg-[#1a5235]"
                 } text-white font-semibold py-2 px-4 rounded-md transition-all duration-300 ease-in-out transform hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2E8B57] focus:ring-offset-2`}
-                disabled={isLoading || !formData.role}
+                disabled={isLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">

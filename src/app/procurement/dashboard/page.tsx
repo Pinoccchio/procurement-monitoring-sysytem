@@ -8,6 +8,8 @@ import { StatusCard } from "@/components/ui/status-card"
 import { PurchaseRequestItem } from "@/components/ui/purchase-request-item"
 import { getPurchaseRequests, getTrackingHistory } from "@/utils/procurement/purchase-requests"
 import type { PurchaseRequest, TrackingEntry } from "@/types/procurement/purchase-request"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function ProcurementDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -51,6 +53,10 @@ export default function ProcurementDashboardPage() {
   const pendingCount = filteredRequests.filter((pr) => pr.status === "pending").length
   const forwardedCount = filteredRequests.filter((pr) => pr.status === "forwarded").length
   const returnedCount = filteredRequests.filter((pr) => pr.status === "returned").length
+  const assessedCount = filteredRequests.filter((pr) => pr.status === "assessed").length
+  const discrepancyCount = filteredRequests.filter((pr) => pr.status === "discrepancy").length
+  const receivedCount = filteredRequests.filter((pr) => pr.status === "received").length
+  const deliveredCount = filteredRequests.filter((pr) => pr.status === "delivered").length
 
   const recentRequests = filteredRequests
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
@@ -85,7 +91,7 @@ export default function ProcurementDashboardPage() {
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            className="text-2xl font-bold text-gray-800"
+            className="text-2xl font-bold text-[#2E8B57]"
           >
             Procurement Dashboard
           </motion.h1>
@@ -95,11 +101,11 @@ export default function ProcurementDashboardPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="relative w-full md:w-[300px]"
           >
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2E8B57]" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              className="pl-10 border-[#2E8B57] focus:ring-[#2E8B57]"
               placeholder="Search PR number or description"
               type="search"
             />
@@ -110,13 +116,17 @@ export default function ProcurementDashboardPage() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         >
           <StatusCard title="APPROVED" count={approvedCount} type="approved" />
           <StatusCard title="DISAPPROVED" count={disapprovedCount} type="disapproved" />
           <StatusCard title="PENDING" count={pendingCount} type="pending" />
           <StatusCard title="FORWARDED" count={forwardedCount} type="forwarded" />
           <StatusCard title="RETURNED" count={returnedCount} type="returned" />
+          <StatusCard title="ASSESSED" count={assessedCount} type="assessed" />
+          <StatusCard title="DISCREPANCY" count={discrepancyCount} type="discrepancy" />
+          <StatusCard title="RECEIVED" count={receivedCount} type="received" />
+          <StatusCard title="DELIVERED" count={deliveredCount} type="delivered" />
         </motion.div>
 
         <motion.div
@@ -124,17 +134,26 @@ export default function ProcurementDashboardPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Recent Purchase Requests</h2>
-          <div className="space-y-4">
-            {recentRequests.map((pr) => (
-              <PurchaseRequestItem
-                key={pr.id}
-                prNumber={pr.pr_number}
-                status={`PR ${pr.status.charAt(0).toUpperCase() + pr.status.slice(1)} to ${pr.current_designation}'s Office`}
-                trackingHistory={trackingHistories[pr.id] || []}
-              />
-            ))}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-[#2E8B57]">Recent Purchase Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-4">
+                  {recentRequests.map((pr) => (
+                    <PurchaseRequestItem
+                      key={pr.id}
+                      prNumber={pr.pr_number}
+                      status={pr.status}
+                      currentDesignation={pr.current_designation}
+                      trackingHistory={trackingHistories[pr.id] || []}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     </motion.div>

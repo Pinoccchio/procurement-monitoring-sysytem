@@ -1,65 +1,61 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import Link from "next/link";
-import Image from "next/image";
-import {
-  ChevronRight,
-  BarChart2,
-  Clock,
-  Users,
-  FileText,
-  ShieldCheck,
-  Search,
-  Menu,
-} from "lucide-react";
-import { LoginDialog } from "@/components/LoginDialog";
-import { SignUpDialog } from "@/components/SignupDialog";
-import { motion } from "framer-motion";
-import { getUser } from "@/utils/auth";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
+import Link from "next/link"
+import Image from "next/image"
+import { ChevronRight, BarChart2, Clock, Users, FileText, ShieldCheck, Search, Menu } from "lucide-react"
+import { LoginDialog } from "@/components/LoginDialog"
+import { SignUpDialog } from "@/components/SignupDialog"
+import { motion } from "framer-motion"
+import { getUser } from "@/utils/auth"
 
-type IconProps = React.ComponentProps<"svg">;
+type IconProps = React.ComponentProps<"svg">
 
 export default function HomePage() {
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
-  const router = useRouter();
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const checkSession = async () => {
-      const user = await getUser();
+      const user = await getUser()
       if (user) {
         if (user.account_type === "procurement") {
-          router.push("/procurement/dashboard");
+          router.push("/procurement/dashboard")
         } else if (user.account_type === "admin") {
-          router.push("/admin/administrative");
+          router.push("/admin/administrative")
+        } else if (user.account_type === "director") {
+          router.push("/director/director")
+        } else if (user.account_type === "bac") {
+          router.push("/bac/bac")
+        } else if (user.account_type === "budget") {
+          router.push("/budget/budget")
+        } else if (user.account_type === "supply") {
+          router.push("/supply/supply")
+        } else if (user.account_type === "end-user") {
+          router.push("/end-user/purchase-requests")
         } else {
-          router.push(`${user.account_type}/dashboard`);
+          router.push(`${user.account_type}/dashboard`)
         }
       }
-    };
+    }
 
-    checkSession();
-  }, [router]);
+    checkSession()
+  }, [router])
 
   const showLogin = () => {
-    setIsSignUpOpen(false);
-    setIsLoginOpen(true);
-  };
+    setIsSignUpOpen(false)
+    setIsLoginOpen(true)
+  }
 
   const showSignUp = () => {
-    setIsLoginOpen(false);
-    setIsSignUpOpen(true);
-  };
+    setIsLoginOpen(false)
+    setIsSignUpOpen(true)
+  }
 
   return (
     <div className="min-h-screen bg-[#f8faf8] flex flex-col">
@@ -75,9 +71,7 @@ export default function HomePage() {
                 className="h-12 w-auto sm:h-14"
               />
               <h1 className="ml-2 sm:ml-3 text-xl sm:text-2xl font-bold text-[#2E8B57] truncate">
-                <span className="hidden sm:inline">
-                  Procurement Monitoring System
-                </span>
+                <span className="hidden sm:inline">Procurement Monitoring System</span>
                 <span className="sm:hidden">PMS</span>
               </h1>
             </div>
@@ -93,35 +87,20 @@ export default function HomePage() {
               <SheetContent side="right" className="w-[300px]">
                 <SheetTitle className="text-[#2E8B57]">Menu</SheetTitle>
                 <nav className="flex flex-col space-y-4 mt-6">
-                  <Link
-                    href="#features"
-                    className="text-[#2E8B57] hover:text-[#1a5235]"
-                  >
+                  <Link href="#features" className="text-[#2E8B57] hover:text-[#1a5235]">
                     Features
                   </Link>
-                  <Link
-                    href="#about"
-                    className="text-[#2E8B57] hover:text-[#1a5235]"
-                  >
+                  <Link href="#about" className="text-[#2E8B57] hover:text-[#1a5235]">
                     About
                   </Link>
-                  <Link
-                    href="#contact"
-                    className="text-[#2E8B57] hover:text-[#1a5235]"
-                  >
+                  <Link href="#contact" className="text-[#2E8B57] hover:text-[#1a5235]">
                     Contact
                   </Link>
                   <hr className="my-4" />
-                  <button
-                    onClick={() => setIsLoginOpen(true)}
-                    className="text-[#2E8B57] hover:text-[#1a5235]"
-                  >
+                  <button onClick={() => setIsLoginOpen(true)} className="text-[#2E8B57] hover:text-[#1a5235]">
                     Log In
                   </button>
-                  <button
-                    onClick={showSignUp}
-                    className="text-[#2E8B57] hover:text-[#1a5235]"
-                  >
+                  <button onClick={showSignUp} className="text-[#2E8B57] hover:text-[#1a5235]">
                     Sign Up
                   </button>
                 </nav>
@@ -130,22 +109,13 @@ export default function HomePage() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
-              <Link
-                href="#features"
-                className="text-[#2E8B57] hover:text-[#1a5235] transition-colors"
-              >
+              <Link href="#features" className="text-[#2E8B57] hover:text-[#1a5235] transition-colors">
                 Features
               </Link>
-              <Link
-                href="#about"
-                className="text-[#2E8B57] hover:text-[#1a5235] transition-colors"
-              >
+              <Link href="#about" className="text-[#2E8B57] hover:text-[#1a5235] transition-colors">
                 About
               </Link>
-              <Link
-                href="#contact"
-                className="text-[#2E8B57] hover:text-[#1a5235] transition-colors"
-              >
+              <Link href="#contact" className="text-[#2E8B57] hover:text-[#1a5235] transition-colors">
                 Contact
               </Link>
             </nav>
@@ -159,10 +129,7 @@ export default function HomePage() {
               >
                 Log In
               </Button>
-              <Button
-                onClick={showSignUp}
-                className="bg-[#2E8B57] text-white hover:bg-[#1a5235]"
-              >
+              <Button onClick={showSignUp} className="bg-[#2E8B57] text-white hover:bg-[#1a5235]">
                 Sign Up
               </Button>
             </div>
@@ -195,8 +162,7 @@ export default function HomePage() {
                 transition={{ delay: 0.4, duration: 0.8 }}
                 className="mt-6 max-w-md mx-auto text-lg sm:text-xl md:text-2xl text-white/90"
               >
-                The ultimate solution for efficient procurement tracking and
-                management.
+                The ultimate solution for efficient procurement tracking and management.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -245,8 +211,7 @@ export default function HomePage() {
                 {
                   icon: FileText,
                   title: "Document Management",
-                  description:
-                    "Centralize all your procurement documents for easy access and improved organization.",
+                  description: "Centralize all your procurement documents for easy access and improved organization.",
                 },
                 {
                   icon: ShieldCheck,
@@ -270,13 +235,9 @@ export default function HomePage() {
                   <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-[#2E8B57]/20">
                     <CardHeader>
                       <feature.icon className="h-8 w-8 text-[#2E8B57] mb-2" />
-                      <CardTitle className="text-[#2E8B57]">
-                        {feature.title}
-                      </CardTitle>
+                      <CardTitle className="text-[#2E8B57]">{feature.title}</CardTitle>
                     </CardHeader>
-                    <CardContent className="text-slate-600">
-                      {feature.description}
-                    </CardContent>
+                    <CardContent className="text-slate-600">{feature.description}</CardContent>
                   </Card>
                 </motion.div>
               ))}
@@ -284,10 +245,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section
-          id="about"
-          className="bg-[#f0f7f0] py-20 sm:py-24 md:py-32 relative overflow-hidden"
-        >
+        <section id="about" className="bg-[#f0f7f0] py-20 sm:py-24 md:py-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOGM5Ljk0MSAwIDE4LTguMDU5IDE4LTE4cy04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNHMxNCA2LjI2OCAxNCAxNHMtNi4yNjggMTQtMTQgMTR6IiBmaWxsPSIjMkU4QjU3IiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvZz48L3N2Zz4=')] opacity-20" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="lg:text-center">
@@ -295,11 +253,9 @@ export default function HomePage() {
                 About Procurement Monitoring System
               </h2>
               <p className="mt-4 max-w-2xl text-lg sm:text-xl text-slate-600 lg:mx-auto">
-                Our Procurement Monitoring System is designed to revolutionize
-                the way organizations handle their procurement processes. We
-                combine cutting-edge technology with user-friendly interfaces to
-                provide a comprehensive solution for all your procurement
-                monitoring needs.
+                Our Procurement Monitoring System is designed to revolutionize the way organizations handle their
+                procurement processes. We combine cutting-edge technology with user-friendly interfaces to provide a
+                comprehensive solution for all your procurement monitoring needs.
               </p>
             </div>
           </div>
@@ -308,23 +264,12 @@ export default function HomePage() {
         <section id="contact" className="py-20 sm:py-24 md:py-32 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl font-extrabold text-[#2E8B57] sm:text-4xl mb-6">
-                Get in Touch
-              </h2>
+              <h2 className="text-3xl font-extrabold text-[#2E8B57] sm:text-4xl mb-6">Get in Touch</h2>
               <p className="mt-4 text-lg text-slate-600 mb-8">
-                Have questions or ready to transform your procurement monitoring
-                process? Contact us today!
+                Have questions or ready to transform your procurement monitoring process? Contact us today!
               </p>
-              <Button
-                size="lg"
-                asChild
-                className="bg-[#2E8B57] hover:bg-[#1a5235] text-white"
-              >
-                <Link
-                  href="https://www.facebook.com/abe.mendiola.50"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+              <Button size="lg" asChild className="bg-[#2E8B57] hover:bg-[#1a5235] text-white">
+                <Link href="https://www.facebook.com/abe.mendiola.50" target="_blank" rel="noopener noreferrer">
                   Contact Us
                 </Link>
               </Button>
@@ -337,118 +282,58 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">
-                Solutions
-              </h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">Solutions</h3>
               <ul className="mt-4 space-y-4">
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    href="/procurement-management"
                     className="text-sm text-white/80 hover:text-white transition-colors"
                   >
                     Procurement Management
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
-                    Supplier Management
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
-                    Contract Management
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">
-                Support
-              </h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">Support</h3>
               <ul className="mt-4 space-y-4">
                 <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
+                  <Link href="/documentation" className="text-sm text-white/80 hover:text-white transition-colors">
                     Documentation
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    href="/documentation-guide"
                     className="text-sm text-white/80 hover:text-white transition-colors"
                   >
-                    Guides
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
-                    API Status
-                  </a>
+                    Documentation Guide
+                  </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">
-                Company
-              </h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">Company</h3>
               <ul className="mt-4 space-y-4">
                 <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
+                  <Link href="/about" className="text-sm text-white/80 hover:text-white transition-colors">
                     About
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
-                    Careers
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">
-                Legal
-              </h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#FFD700]">Legal</h3>
               <ul className="mt-4 space-y-4">
                 <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
+                  <Link href="/privacy" className="text-sm text-white/80 hover:text-white transition-colors">
                     Privacy Policy
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
-                    className="text-sm text-white/80 hover:text-white transition-colors"
-                  >
+                  <Link href="/terms" className="text-sm text-white/80 hover:text-white transition-colors">
                     Terms of Service
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -489,11 +374,7 @@ export default function HomePage() {
                   ),
                 },
               ].map((item) => (
-                <a
-                  key={item.name}
-                  href="#"
-                  className="text-white/60 hover:text-white/90 transition-colors"
-                >
+                <a key={item.name} href="#" className="text-white/60 hover:text-white/90 transition-colors">
                   <span className="sr-only">{item.name}</span>
                   <item.icon className="h-6 w-6" aria-hidden="true" />
                 </a>
@@ -506,16 +387,9 @@ export default function HomePage() {
         </div>
       </footer>
 
-      <LoginDialog
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onShowSignUp={showSignUp}
-      />
-      <SignUpDialog
-        isOpen={isSignUpOpen}
-        onClose={() => setIsSignUpOpen(false)}
-        onShowLogin={showLogin}
-      />
+      <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onShowSignUp={showSignUp} />
+      <SignUpDialog isOpen={isSignUpOpen} onClose={() => setIsSignUpOpen(false)} onShowLogin={showLogin} />
     </div>
-  );
+  )
 }
+

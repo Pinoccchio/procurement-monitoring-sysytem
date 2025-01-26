@@ -39,6 +39,7 @@ export async function createPurchaseRequest(data: CreatePurchaseRequest): Promis
         status: "pending",
         designation: data.current_designation,
         notes: "Initial creation",
+        notification_type: "procurement",
       },
     ])
 
@@ -69,6 +70,7 @@ export async function updatePurchaseRequestStatus(
   status: PRStatus,
   designation: PRDesignation,
   notes?: string,
+  notificationTypes: string[] = ["procurement"],
 ): Promise<void> {
   const { error: updateError } = await supabaseClient
     .from("purchase_requests")
@@ -80,14 +82,15 @@ export async function updatePurchaseRequestStatus(
 
   if (updateError) throw updateError
 
-  const { error: trackingError } = await supabaseClient.from("tracking_history").insert([
-    {
-      pr_id: prId,
-      status: status,
-      designation: designation,
-      notes: notes,
-    },
-  ])
+  const trackingEntries = notificationTypes.map((type) => ({
+    pr_id: prId,
+    status: status,
+    designation: designation,
+    notes: notes,
+    notification_type: type,
+  }))
+
+  const { error: trackingError } = await supabaseClient.from("tracking_history").insert(trackingEntries)
 
   if (trackingError) throw trackingError
 }

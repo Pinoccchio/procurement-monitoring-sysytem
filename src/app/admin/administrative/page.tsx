@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Check, X, FileText, AlertCircle, ArrowLeft, CornerDownRight } from "lucide-react"
+import { Search, Check, X, FileText, AlertCircle, ArrowLeft, CornerDownRight, ArrowRight } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,15 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogClose,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { TrackingDialog } from "@/components/layout/admin/TrackingDialog"
-import { getPurchaseRequests, updatePurchaseRequestStatus } from "@/utils/procurement/purchase-requests"
-import type { PurchaseRequest } from "@/types/procurement/purchase-request"
+import { getPurchaseRequests, updatePurchaseRequestStatus } from "@/utils/admin/purchase-requests"
+import type { PurchaseRequest, PRDesignation } from "@/types/procurement/purchase-request"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function AdministrativePage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -29,6 +32,10 @@ export default function AdministrativePage() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [returnDestination, setReturnDestination] = useState<PRDesignation | null>(null)
+  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
+  const [forwardDestination, setForwardDestination] = useState<PRDesignation | null>(null)
+  const [isForwardDialogOpen, setIsForwardDialogOpen] = useState(false)
 
   useEffect(() => {
     loadPurchaseRequests()
@@ -41,7 +48,9 @@ export default function AdministrativePage() {
       const data = await getPurchaseRequests()
       setPurchaseRequests(
         data.filter(
-          (pr) => ["forwarded", "approved", "received"].includes(pr.status) && pr.current_designation === "admin",
+          (pr) =>
+            ["forwarded", "approved", "received", "disapproved", "returned"].includes(pr.status) &&
+            pr.current_designation === "admin",
         ),
       )
     } catch (error) {
@@ -82,31 +91,48 @@ export default function AdministrativePage() {
       await updatePurchaseRequestStatus(
         pr.id,
         "disapproved",
-        "procurement",
-        "Purchase request disapproved by Administrative and returned to Procurement",
+        "admin", // Keep the current designation as admin
+        "Purchase request disapproved by Administrative",
       )
       await loadPurchaseRequests()
-      setSuccessMessage("Purchase request disapproved and returned to Procurement successfully!")
+      setSuccessMessage("Purchase request disapproved successfully!")
     } catch (error) {
       console.error("Error disapproving purchase request:", error)
       setError("Failed to disapprove purchase request. Please try again.")
     }
   }
 
-  const handleReturn = async (pr: PurchaseRequest) => {
+  const handleReturn = async (pr: PurchaseRequest, destination: PRDesignation) => {
     try {
       setError(null)
       await updatePurchaseRequestStatus(
         pr.id,
         "returned",
-        "procurement",
-        `Purchase request returned to Procurement by Administrative`,
+        destination,
+        `Purchase request returned to ${destination} by Administrative`,
       )
       await loadPurchaseRequests()
       setSuccessMessage("Purchase request returned successfully!")
     } catch (error) {
       console.error("Error returning purchase request:", error)
       setError("Failed to return purchase request. Please try again.")
+    }
+  }
+
+  const handleForward = async (pr: PurchaseRequest, destination: PRDesignation) => {
+    try {
+      setError(null)
+      await updatePurchaseRequestStatus(
+        pr.id,
+        "forwarded",
+        destination,
+        `Purchase request forwarded to ${destination} by Admin`,
+      )
+      await loadPurchaseRequests()
+      setSuccessMessage("Purchase request forwarded successfully!")
+    } catch (error) {
+      console.error("Error forwarding purchase request:", error)
+      setError("Failed to forward purchase request. Please try again.")
     }
   }
 
@@ -199,7 +225,6 @@ export default function AdministrativePage() {
                     pr.status === "approved" && "border-l-4 border-l-green-500",
                     pr.status === "forwarded" && "border-l-4 border-l-blue-500",
                     pr.status === "received" && "border-l-4 border-l-purple-500",
-                    pr.status === "pending" && "border-l-4 border-l-blue-300",
                   )}
                 >
                   <CardContent className="p-4 sm:p-6">
@@ -233,122 +258,212 @@ export default function AdministrativePage() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                        {pr.status === "forwarded" && (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className="flex-1 sm:flex-none border-blue-500 text-blue-500 hover:bg-blue-50"
-                              >
-                                <CornerDownRight className="h-4 w-4 mr-2" />
-                                Receive
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
-                              <DialogHeader>
-                                <DialogTitle>Receive Purchase Request</DialogTitle>
-                                <DialogDescription>Are you sure you want to receive {pr.pr_number}?</DialogDescription>
-                              </DialogHeader>
-                              <div className="flex justify-end gap-2 mt-4">
-                                <DialogClose asChild>
-                                  <Button variant="outline">Cancel</Button>
-                                </DialogClose>
-                                <Button onClick={() => handleReceive(pr)} className="bg-blue-500 hover:bg-blue-600">
-                                  Confirm Receipt
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        )}
-
-                        {(pr.status === "received" || pr.status === "approved") && (
+                        {pr.current_designation === "admin" && (
                           <>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 sm:flex-none border-green-500 text-green-500 hover:bg-green-50"
-                                >
-                                  <Check className="h-4 w-4 mr-2" />
-                                  Approve
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                  <DialogTitle>Approve Purchase Request</DialogTitle>
-                                  <DialogDescription>
-                                    Are you sure you want to approve {pr.pr_number}?
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex justify-end gap-2 mt-4">
-                                  <DialogClose asChild>
-                                    <Button variant="outline">Cancel</Button>
-                                  </DialogClose>
-                                  <Button onClick={() => handleApprove(pr)} className="bg-green-500 hover:bg-green-600">
-                                    Confirm Approval
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 sm:flex-none border-red-500 text-red-500 hover:bg-red-50"
-                                >
-                                  <X className="h-4 w-4 mr-2" />
-                                  Disapprove
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                  <DialogTitle>Disapprove Purchase Request</DialogTitle>
-                                  <DialogDescription>
-                                    Are you sure you want to disapprove {pr.pr_number}?
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex justify-end gap-2 mt-4">
-                                  <DialogClose asChild>
-                                    <Button variant="outline">Cancel</Button>
-                                  </DialogClose>
-                                  <Button onClick={() => handleDisapprove(pr)} variant="destructive">
-                                    Confirm Disapproval
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 sm:flex-none border-yellow-500 text-yellow-500 hover:bg-yellow-50"
-                                >
-                                  <ArrowLeft className="h-4 w-4 mr-2" />
-                                  Return
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                  <DialogTitle>Return Purchase Request</DialogTitle>
-                                  <DialogDescription>
-                                    Are you sure you want to return {pr.pr_number} to Procurement?
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex justify-end gap-2 mt-4">
-                                  <DialogClose asChild>
-                                    <Button variant="outline">Cancel</Button>
-                                  </DialogClose>
+                            {(pr.status === "forwarded" || pr.status === "returned") && (
+                              <Dialog>
+                                <DialogTrigger asChild>
                                   <Button
-                                    onClick={() => handleReturn(pr)}
-                                    className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                                    variant="outline"
+                                    className="flex-1 sm:flex-none border-blue-500 text-blue-500 hover:bg-blue-50"
                                   >
-                                    Confirm Return
+                                    <CornerDownRight className="h-4 w-4 mr-2" />
+                                    Receive
                                   </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[425px]">
+                                  <DialogHeader>
+                                    <DialogTitle>Receive Purchase Request</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to receive {pr.pr_number}?
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex justify-end gap-2 mt-4">
+                                    <DialogClose asChild>
+                                      <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
+                                    <Button onClick={() => handleReceive(pr)} className="bg-blue-500 hover:bg-blue-600">
+                                      Confirm Receipt
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+
+                            {(pr.status === "pending" || pr.status === "received" || pr.status === "disapproved") && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1 sm:flex-none border-green-500 text-green-500 hover:bg-green-50"
+                                  >
+                                    <Check className="h-4 w-4 mr-2" />
+                                    Approve
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[425px]">
+                                  <DialogHeader>
+                                    <DialogTitle>Approve Purchase Request</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to approve {pr.pr_number}?
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex justify-end gap-2 mt-4">
+                                    <DialogClose asChild>
+                                      <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
+                                    <Button
+                                      onClick={() => handleApprove(pr)}
+                                      className="bg-green-500 hover:bg-green-600"
+                                    >
+                                      Confirm Approval
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+
+                            {(pr.status === "pending" || pr.status === "received" || pr.status === "approved") && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1 sm:flex-none border-red-500 text-red-500 hover:bg-red-50"
+                                  >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Disapprove
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[425px]">
+                                  <DialogHeader>
+                                    <DialogTitle>Disapprove Purchase Request</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to disapprove {pr.pr_number}?
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex justify-end gap-2 mt-4">
+                                    <DialogClose asChild>
+                                      <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
+                                    <Button onClick={() => handleDisapprove(pr)} variant="destructive">
+                                      Confirm Disapproval
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+
+                            {pr.status === "approved" && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1 sm:flex-none border-blue-500 text-blue-500 hover:bg-blue-50"
+                                  >
+                                    <ArrowRight className="h-4 w-4 mr-2" />
+                                    Forward
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[425px]">
+                                  <DialogHeader>
+                                    <DialogTitle>Forward Purchase Request</DialogTitle>
+                                    <DialogDescription>
+                                      Choose where to forward {pr.pr_number} and confirm the action.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="forward-destination">Forward Destination</Label>
+                                      <Select onValueChange={(value: PRDesignation) => setForwardDestination(value)}>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select destination" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="procurement">Procurement</SelectItem>
+                                          <SelectItem value="budget">Budget</SelectItem>
+                                          <SelectItem value="director">Director</SelectItem>
+                                          <SelectItem value="bac">BAC</SelectItem>
+                                          <SelectItem value="supply">Supply</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsForwardDialogOpen(false)}>
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      onClick={() => {
+                                        if (forwardDestination) {
+                                          handleForward(pr, forwardDestination)
+                                          setIsForwardDialogOpen(false)
+                                        }
+                                      }}
+                                      disabled={!forwardDestination}
+                                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                                    >
+                                      Confirm Forward
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+
+                            {pr.status === "disapproved" && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1 sm:flex-none border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                                  >
+                                    <ArrowLeft className="h-4 w-4 mr-2" />
+                                    Return
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[425px]">
+                                  <DialogHeader>
+                                    <DialogTitle>Return Purchase Request</DialogTitle>
+                                    <DialogDescription>
+                                      Choose where to return {pr.pr_number} and confirm the action.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="return-destination">Return Destination</Label>
+                                      <Select onValueChange={(value: PRDesignation) => setReturnDestination(value)}>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select destination" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="procurement">Procurement</SelectItem>
+                                          <SelectItem value="budget">Budget</SelectItem>
+                                          <SelectItem value="director">Director</SelectItem>
+                                          <SelectItem value="bac">BAC</SelectItem>
+                                          <SelectItem value="supply">Supply</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsReturnDialogOpen(false)}>
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      onClick={() => {
+                                        if (returnDestination) {
+                                          handleReturn(pr, returnDestination)
+                                          setIsReturnDialogOpen(false)
+                                        }
+                                      }}
+                                      disabled={!returnDestination}
+                                      className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                                    >
+                                      Confirm Return
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            )}
                           </>
                         )}
 

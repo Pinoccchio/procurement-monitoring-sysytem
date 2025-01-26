@@ -1,12 +1,9 @@
-"use client"
-
 import { cn } from "@/lib/utils"
-import { LayoutGrid, Users, ChevronDown } from "lucide-react"
+import { Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { usePathname } from "next/navigation"
 
 interface AdminSidebarProps {
   isOpen: boolean
@@ -16,12 +13,6 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ isOpen, onClose, className }: AdminSidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
-
-  const handleNavigate = (path: string) => {
-    router.push(`/admin/${path}`)
-    onClose() // Close the sidebar on mobile after navigation
-  }
 
   return (
     <>
@@ -61,58 +52,21 @@ export function AdminSidebar({ isOpen, onClose, className }: AdminSidebarProps) 
           </div>
 
           <nav className="flex-1 space-y-1 p-4">
-            <Link href="/admin/dashboard" onClick={() => onClose()}>
+            <Link href="/admin/administrative" onClick={() => onClose()}>
               <Button
                 variant="ghost"
                 className={cn(
                   "w-full justify-start hover:text-white hover:bg-[#2E8B57] transition-colors duration-300",
-                  pathname === "/admin/dashboard" ? "bg-[#2E8B57] text-white" : "text-[#2E8B57]",
+                  pathname === "/admin/administrative" ? "bg-[#2E8B57] text-white" : "text-[#2E8B57]",
                 )}
               >
-                <LayoutGrid className="mr-3 h-5 w-5" />
-                Dashboard
+                <Users className="mr-3 h-5 w-5" />
+                Administrative
               </Button>
             </Link>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start hover:text-white hover:bg-[#2E8B57] transition-colors duration-300",
-                    pathname === "/admin/administrative" || pathname === "/admin/budget"
-                      ? "bg-[#2E8B57] text-white"
-                      : "text-[#2E8B57]",
-                  )}
-                >
-                  <Users className="mr-3 h-5 w-5" />
-                  <span className="flex-1 text-left">{pathname === "/admin/budget" ? "Budget" : "Administrative"}</span>
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[calc(var(--radix-dropdown-menu-trigger-width)-24px)]"
-                align="start"
-                sideOffset={0}
-              >
-                <DropdownMenuItem
-                  onClick={() => handleNavigate("administrative")}
-                  className="hover:bg-[#2E8B57] hover:text-white focus:bg-[#2E8B57] focus:text-white"
-                >
-                  Administrative
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleNavigate("budget")}
-                  className="hover:bg-[#2E8B57] hover:text-white focus:bg-[#2E8B57] focus:text-white"
-                >
-                  Budget
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
         </div>
       </motion.aside>
     </>
   )
 }
-

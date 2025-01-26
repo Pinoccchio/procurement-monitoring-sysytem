@@ -9,10 +9,11 @@ import { usePathname, useRouter } from "next/navigation"
 
 interface ProcurementSidebarProps {
   isOpen: boolean
+  onClose?: () => void
   className?: string
 }
 
-export function ProcurementSidebar({ isOpen, className }: ProcurementSidebarProps) {
+export function ProcurementSidebar({ isOpen, onClose, className }: ProcurementSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -25,7 +26,7 @@ export function ProcurementSidebar({ isOpen, className }: ProcurementSidebarProp
           animate={{ opacity: 0.3 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black z-30 lg:hidden"
-          onClick={() => router.push(pathname)}
+          onClick={() => onClose && onClose()}
         />
       )}
 
@@ -88,3 +89,4 @@ export function ProcurementSidebar({ isOpen, className }: ProcurementSidebarProp
     </>
   )
 }
+

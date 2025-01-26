@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState, useEffect } from "react"
-import { updatePurchaseRequestStatus, getTrackingHistory } from "@/utils/procurement/purchase-requests"
+import { updatePurchaseRequestStatus, getTrackingHistory } from "@/utils/admin/purchase-requests"
 import type { PurchaseRequest, PRStatus, PRDesignation, TrackingEntry } from "@/types/procurement/purchase-request"
 import { cn } from "@/lib/utils"
 
@@ -55,12 +55,19 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
           purchaseRequest.current_designation,
           "Purchase request received by Administrative",
         )
-      } else if (status === "returned" || status === "disapproved") {
+      } else if (status === "returned" || status === "forwarded") {
         await updatePurchaseRequestStatus(
           purchaseRequest.id,
           status,
-          "procurement", // Always return to procurement for both returned and disapproved
-          `Purchase request ${status} to Procurement by ${purchaseRequest.current_designation}: ${remarks}`,
+          nextDesignation,
+          `Purchase request ${status} to ${nextDesignation} by ${purchaseRequest.current_designation}: ${remarks}`,
+        )
+      } else if (status === "disapproved") {
+        await updatePurchaseRequestStatus(
+          purchaseRequest.id,
+          status,
+          purchaseRequest.current_designation,
+          `Purchase request disapproved by ${purchaseRequest.current_designation}: ${remarks}`,
         )
       } else {
         await updatePurchaseRequestStatus(purchaseRequest.id, status, nextDesignation, remarks)
@@ -97,26 +104,11 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
       entry.status === "pending" && "text-blue-300",
     )
 
-    switch (entry.status) {
-      case "approved":
-        return <span className={statusClass}>PR Approved by {entry.designation}</span>
-      case "disapproved":
-        return <span className={statusClass}>PR Disapproved by {entry.designation}</span>
-      case "forwarded":
-        return <span className={statusClass}>PR Forwarded to {entry.designation}</span>
-      case "pending":
-        return <span className={statusClass}>PR Created and assigned to {entry.designation}</span>
-      case "returned":
-        return <span className={statusClass}>PR Returned to {entry.designation}</span>
-      case "received":
-        return <span className={statusClass}>PR Received by {entry.designation}</span>
-      default:
-        return (
-          <span>
-            PR Status updated to {entry.status} by {entry.designation}
-          </span>
-        )
-    }
+    return (
+      <span className={statusClass}>
+        PR {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)} by {entry.designation}
+      </span>
+    )
   }
 
   return (
@@ -172,6 +164,7 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="disapproved">Disapproved</SelectItem>
                     <SelectItem value="returned">Returned</SelectItem>
+                    {purchaseRequest.status === "approved" && <SelectItem value="forwarded">Forward</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -179,20 +172,22 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
               <div className="space-y-2">
                 <Label htmlFor="next-designation">Next Designation</Label>
                 <Select
-                  value={status === "returned" || status === "disapproved" ? "procurement" : nextDesignation}
+                  value={nextDesignation}
                   onValueChange={(value: PRDesignation) => setNextDesignation(value)}
-                  disabled={status === "returned" || status === "disapproved"}
+                  disabled={status !== "forwarded" && status !== "returned"}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select next designation" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="procurement">Procurement</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="budget">Budget</SelectItem>
-                    <SelectItem value="director">Director</SelectItem>
-                    <SelectItem value="bac">BAC</SelectItem>
-                    <SelectItem value="supply">Supply</SelectItem>
+                    {["procurement", "admin", "budget", "director", "bac", "supply"].map(
+                      (designation) =>
+                        designation !== purchaseRequest.current_designation && (
+                          <SelectItem key={designation} value={designation as PRDesignation}>
+                            {designation.charAt(0).toUpperCase() + designation.slice(1)}
+                          </SelectItem>
+                        ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>

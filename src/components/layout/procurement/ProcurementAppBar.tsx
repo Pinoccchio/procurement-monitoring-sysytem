@@ -30,7 +30,10 @@ export function ProcurementAppBar({ isSidebarOpen, onSidebarOpenChange, classNam
     try {
       setIsLoading(true)
       const history = await getTrackingHistory()
-      const sortedHistory = history.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      const filteredHistory = history.filter((entry) => entry.notification_type === "procurement")
+      const sortedHistory = filteredHistory.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
       setNotifications(sortedHistory)
       setNewNotifications(sortedHistory)
     } catch (error) {
@@ -45,10 +48,19 @@ export function ProcurementAppBar({ isSidebarOpen, onSidebarOpenChange, classNam
 
     const subscription = supabaseClient
       .channel("tracking_history_changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tracking_history" }, (payload) => {
-        console.log("Change received!", payload)
-        loadNotifications()
-      })
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "tracking_history",
+          filter: "notification_type=eq.procurement",
+        },
+        (payload) => {
+          console.log("Change received!", payload)
+          loadNotifications()
+        },
+      )
       .subscribe()
 
     return () => {
@@ -200,5 +212,4 @@ export function ProcurementAppBar({ isSidebarOpen, onSidebarOpenChange, classNam
     </header>
   )
 }
-
 

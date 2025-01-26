@@ -17,10 +17,8 @@ interface TrackingDialogProps {
 }
 
 export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: TrackingDialogProps) {
-  const isProcurement = purchaseRequest.current_designation === "procurement"
-  const canModify = isProcurement && purchaseRequest.status !== "forwarded" && purchaseRequest.status !== "received"
-  const [action, setAction] = useState<"approve" | "disapprove" | "forward">("approve")
-  const [nextDesignation, setNextDesignation] = useState<PRDesignation | "">("")
+  const [status, setStatus] = useState<PRStatus>(purchaseRequest.status)
+  const [nextDesignation, setNextDesignation] = useState<PRDesignation>(purchaseRequest.current_designation)
   const [remarks, setRemarks] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
   const [trackingHistory, setTrackingHistory] = useState<TrackingEntry[]>([])
@@ -29,11 +27,11 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
   useEffect(() => {
     if (isOpen) {
       loadTrackingHistory()
-      setAction("approve")
-      setNextDesignation("")
+      setStatus(purchaseRequest.status)
+      setNextDesignation(purchaseRequest.current_designation)
       setRemarks("")
     }
-  }, [isOpen, purchaseRequest.id])
+  }, [isOpen, purchaseRequest.status, purchaseRequest.current_designation])
 
   const loadTrackingHistory = async () => {
     try {
@@ -48,22 +46,15 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
   }
 
   const handleUpdate = async () => {
-    if (!isProcurement) {
-      console.error("Cannot modify purchase request: not assigned to procurement")
-      return
-    }
-
     setIsUpdating(true)
     try {
-      let status: PRStatus = action === "approve" ? "approved" : action === "disapprove" ? "disapproved" : "forwarded"
-      let designation: PRDesignation = purchaseRequest.current_designation
-
-      if (action === "forward" && nextDesignation) {
-        status = "forwarded"
-        designation = nextDesignation
+      let message = `Purchase request ${status} by Procurement: ${remarks}`
+      if (status === "assessed") {
+        message = "Purchase request assessed: Delivery inspected and matches the order"
+      } else if (status === "discrepancy") {
+        message = "Purchase request discrepancy reported: Delivery does not match the order"
       }
-
-      await updatePurchaseRequestStatus(purchaseRequest.id, status, designation, remarks)
+      await updatePurchaseRequestStatus(purchaseRequest.id, status, nextDesignation, message)
       await loadTrackingHistory()
       onUpdate()
       onClose()
@@ -85,39 +76,85 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
     })
   }
 
-  const getStatusMessage = (entry: TrackingEntry) => {
-    const statusClass = cn(
-      "font-semibold",
-      entry.status === "returned" && "text-yellow-500",
-      entry.status === "disapproved" && "text-red-500",
-      entry.status === "approved" && "text-green-500",
-      entry.status === "forwarded" && "text-blue-500",
-      entry.status === "received" && "text-purple-500",
-    )
-
-    switch (entry.status) {
-      case "approved":
-        return <span className={statusClass}>PR Approved by {entry.designation}</span>
-      case "disapproved":
-        return <span className={statusClass}>PR Disapproved by {entry.designation}</span>
-      case "forwarded":
-        return <span className={statusClass}>PR Forwarded to {entry.designation}</span>
-      case "pending":
-        return <span>PR Created and assigned to {entry.designation}</span>
+  const getStatusColor = (status: string) => {
+    switch (status) {
       case "returned":
-        return <span className={statusClass}>PR Returned to {entry.designation}</span>
+        return "text-yellow-500"
+      case "disapproved":
+        return "text-red-500"
+      case "approved":
+        return "text-green-500"
+      case "forwarded":
+        return "text-blue-500"
       case "received":
-        return <span className={statusClass}>PR Received by {entry.designation}</span>
+        return "text-purple-500"
+      case "pending":
+        return "text-blue-300"
+      case "assessed":
+        return "text-green-600"
+      case "discrepancy":
+        return "text-red-600"
+      case "delivered":
+        return "text-violet-500"
+      default:
+        return ""
+    }
+  }
+
+  const getStatusMessage = (entry: TrackingEntry) => {
+    const statusColor = getStatusColor(entry.status)
+    switch (entry.status) {
+      case "assessed":
+        return (
+          <span className={cn("font-semibold", statusColor)}>
+            PR Assessed: Delivery inspected and matches the order
+          </span>
+        )
+      case "discrepancy":
+        return (
+          <span className={cn("font-semibold", statusColor)}>PR Discrepancy: Delivery does not match the order</span>
+        )
+      case "delivered":
+        return <span className={cn("font-semibold", statusColor)}>PR Delivered by Supply</span>
       default:
         return (
-          <span>
-            PR Status updated to {entry.status} by {entry.designation}
+          <span className={cn("font-semibold", statusColor)}>
+            PR {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)} by {entry.designation}
           </span>
         )
     }
   }
 
-  const showForwardOption = purchaseRequest.status === "approved" && isProcurement
+  const renderStatusOptions = () => {
+    switch (purchaseRequest.status) {
+      case "delivered":
+        return (
+          <>
+            <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="assessed">Assess Delivery (Matches Order)</SelectItem>
+            <SelectItem value="discrepancy">Report Discrepancy (Doesn't Match Order)</SelectItem>
+          </>
+        )
+      case "assessed":
+        return (
+          <>
+            <SelectItem value="assessed">Assessed (Matches Order)</SelectItem>
+            <SelectItem value="discrepancy">Report Discrepancy (Doesn't Match Order)</SelectItem>
+            <SelectItem value="forwarded">Forward</SelectItem>
+          </>
+        )
+      case "discrepancy":
+        return (
+          <>
+            <SelectItem value="assessed">Assess Delivery (Matches Order)</SelectItem>
+            <SelectItem value="discrepancy">Discrepancy (Doesn't Match Order)</SelectItem>
+            <SelectItem value="returned">Return</SelectItem>
+          </>
+        )
+      default:
+        return null
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -160,42 +197,47 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
             </div>
           </div>
 
-          {canModify && (
+          {purchaseRequest.status !== "forwarded" && (
             <div className="grid gap-4">
               <div className="space-y-2">
-                <Label htmlFor="action">Action</Label>
-                <Select
-                  value={action}
-                  onValueChange={(value: "approve" | "disapprove" | "forward") => setAction(value)}
-                >
+                <Label htmlFor="status">Status</Label>
+                <Select value={status} onValueChange={(value: PRStatus) => setStatus(value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select action" />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {purchaseRequest.status !== "approved" && <SelectItem value="approve">Approve</SelectItem>}
-                    {purchaseRequest.status !== "disapproved" && <SelectItem value="disapprove">Disapprove</SelectItem>}
-                    {purchaseRequest.status === "approved" && <SelectItem value="forward">Forward</SelectItem>}
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="disapproved">Disapproved</SelectItem>
+                    <SelectItem value="returned">Returned</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="received">Received</SelectItem>
+                    {renderStatusOptions()}
                   </SelectContent>
                 </Select>
               </div>
 
-              {(action === "forward" || showForwardOption) && (
-                <div className="space-y-2">
-                  <Label htmlFor="next-designation">Next Designation</Label>
-                  <Select value={nextDesignation} onValueChange={(value: PRDesignation) => setNextDesignation(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select next designation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="budget">Budget</SelectItem>
-                      <SelectItem value="director">Director</SelectItem>
-                      <SelectItem value="bac">BAC</SelectItem>
-                      <SelectItem value="supply">Supply</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="next-designation">Next Designation</Label>
+                <Select
+                  value={nextDesignation}
+                  onValueChange={(value: PRDesignation) => setNextDesignation(value)}
+                  disabled={status !== "forwarded" && status !== "returned"}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select next designation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["admin", "budget", "director", "bac", "supply"].map(
+                      (designation) =>
+                        designation !== purchaseRequest.current_designation && (
+                          <SelectItem key={designation} value={designation as PRDesignation}>
+                            {designation.charAt(0).toUpperCase() + designation.slice(1)}
+                          </SelectItem>
+                        ),
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="remarks">Remarks</Label>
@@ -211,19 +253,11 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Close
+            Cancel
           </Button>
-          {canModify && (
-            <Button onClick={handleUpdate} disabled={isUpdating || (action === "forward" && !nextDesignation)}>
-              {isUpdating
-                ? "Updating..."
-                : action === "approve"
-                  ? "Approve"
-                  : action === "disapprove"
-                    ? "Disapprove"
-                    : "Forward"}
-            </Button>
-          )}
+          <Button onClick={handleUpdate} disabled={isUpdating}>
+            {isUpdating ? "Updating..." : purchaseRequest.status === "forwarded" ? "Receive" : "Update"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

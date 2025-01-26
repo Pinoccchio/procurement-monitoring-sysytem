@@ -19,6 +19,7 @@ export type TrackingEntry = {
   designation: PRDesignation
   notes: string
   created_at: string
+  notification_type: string
 }
 
 export interface AdminUser {

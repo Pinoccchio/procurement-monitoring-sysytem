@@ -1,4 +1,13 @@
-export type PRStatus = "pending" | "approved" | "disapproved" | "returned" | "forwarded" | "received"
+export type PRStatus =
+  | "pending"
+  | "approved"
+  | "disapproved"
+  | "returned"
+  | "forwarded"
+  | "received"
+  | "delivered"
+  | "assessed"
+  | "discrepancy"
 export type PRDesignation = "procurement" | "admin" | "budget" | "director" | "bac" | "supply"
 
 export interface CreatePurchaseRequest {
@@ -25,5 +34,6 @@ export type TrackingEntry = {
   designation: PRDesignation
   notes: string
   created_at: string
+  notification_type: string
 }
 

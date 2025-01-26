@@ -14,9 +14,10 @@ export default function ProcurementLayout({ children }: { children: React.ReactN
         onSidebarOpenChange={setIsSidebarOpen}
         className="fixed top-0 left-0 right-0 z-50"
       />
-      <ProcurementSidebar isOpen={isSidebarOpen} />
+      <ProcurementSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <main className="pt-16 lg:pl-64">{children}</main>
     </div>
   )
 }
+
 

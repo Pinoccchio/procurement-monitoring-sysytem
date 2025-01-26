@@ -1,6 +1,17 @@
-import type { PurchaseRequest, TrackingEntry, PRStatus, PRDesignation } from "@/types/admin/purchase-request"
+import type { PurchaseRequest, TrackingEntry, PRDesignation } from "@/types/admin/purchase-request"
 import type { User } from "@/types/procurement/user"
 import { createClient } from "@supabase/supabase-js"
+
+export type PRStatus =
+  | "pending"
+  | "approved"
+  | "disapproved"
+  | "returned"
+  | "forwarded"
+  | "received"
+  | "delivered"
+  | "assessed"
+  | "discrepancy"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -27,16 +38,17 @@ export async function getPurchaseRequests(): Promise<PurchaseRequest[]> {
 export async function updatePurchaseRequestStatus(
   prId: string,
   status: PRStatus,
-  nextDesignation: PRDesignation,
+  designation: PRDesignation,
   notes?: string,
 ): Promise<void> {
-  const { error: updateError } = await supabaseClient
-    .from("purchase_requests")
-    .update({
-      status: status,
-      current_designation: nextDesignation,
-    })
-    .eq("id", prId)
+  const updateData: { status: PRStatus; current_designation?: PRDesignation } = { status }
+
+  // Only update current_designation if the status is not 'disapproved'
+  if (status !== "disapproved") {
+    updateData.current_designation = designation
+  }
+
+  const { error: updateError } = await supabaseClient.from("purchase_requests").update(updateData).eq("id", prId)
 
   if (updateError) throw updateError
 
@@ -44,8 +56,9 @@ export async function updatePurchaseRequestStatus(
     {
       pr_id: prId,
       status: status,
-      designation: nextDesignation,
+      designation: designation,
       notes: notes,
+      notification_type: "admin",
     },
   ])
 

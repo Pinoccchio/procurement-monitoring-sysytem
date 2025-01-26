@@ -15,7 +15,17 @@ export function SessionCheck() {
           router.push('/procurement/dashboard')
         } else if (user.account_type === 'admin') {
           router.push('/admin/dashboard')
-        }
+        } else if (user.account_type === "director") {
+          router.push("/director/director")
+        } else if (user.account_type === "bac") {
+          router.push("/bac/bac")
+        } else if (user.account_type === "budget") {
+          router.push("/budget/budget")
+        } else if (user.account_type === "supply") {
+          router.push("/supply/supply")
+        } else if (user.account_type === "end-user") {
+          router.push("/end-user/purchase-requests")
+        } 
         else {
           router.push(`${user.account_type}/dashboard`)
         }  
