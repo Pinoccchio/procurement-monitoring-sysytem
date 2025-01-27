@@ -146,6 +146,7 @@ export default function EndUserDashboardPage() {
                       key={pr.id}
                       prNumber={pr.pr_number}
                       status={pr.status}
+                      currentDesignation={pr.current_designation}
                       trackingHistory={trackingHistories[pr.id] || []}
                     />
                   ))}
