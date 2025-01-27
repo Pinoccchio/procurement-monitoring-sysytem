@@ -66,9 +66,7 @@ export default function ProcurementPurchaseRequestsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [returnDestination, setReturnDestination] = useState<PRDesignation | null>(null)
-  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
   const [forwardDestination, setForwardDestination] = useState<PRDesignation | null>(null)
-  const [isForwardDialogOpen, setIsForwardDialogOpen] = useState(false)
 
   useEffect(() => {
     loadPurchaseRequests()
@@ -375,7 +373,6 @@ export default function ProcurementPurchaseRequestsPage() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                        {/* Buttons for different actions based on status. Return is only for disapproved status */}
                         {pr.current_designation === "procurement" && (
                           <>
                             {(pr.status === "forwarded" || pr.status === "returned") && (
@@ -507,14 +504,13 @@ export default function ProcurementPurchaseRequestsPage() {
                                     </div>
                                   </div>
                                   <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsForwardDialogOpen(false)}>
-                                      Cancel
-                                    </Button>
+                                    <DialogClose asChild>
+                                      <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
                                     <Button
                                       onClick={() => {
                                         if (forwardDestination) {
                                           handleForward(pr, forwardDestination)
-                                          setIsForwardDialogOpen(false)
                                         }
                                       }}
                                       disabled={!forwardDestination}
@@ -563,14 +559,13 @@ export default function ProcurementPurchaseRequestsPage() {
                                     </div>
                                   </div>
                                   <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsReturnDialogOpen(false)}>
-                                      Cancel
-                                    </Button>
+                                    <DialogClose asChild>
+                                      <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
                                     <Button
                                       onClick={() => {
                                         if (returnDestination) {
                                           handleReturn(pr, returnDestination)
-                                          setIsReturnDialogOpen(false)
                                         }
                                       }}
                                       disabled={!returnDestination}

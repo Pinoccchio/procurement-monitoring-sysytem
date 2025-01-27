@@ -5,7 +5,7 @@ import { LayoutGrid, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 interface ProcurementSidebarProps {
   isOpen: boolean
@@ -15,7 +15,6 @@ interface ProcurementSidebarProps {
 
 export function ProcurementSidebar({ isOpen, onClose, className }: ProcurementSidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
 
   return (
     <>

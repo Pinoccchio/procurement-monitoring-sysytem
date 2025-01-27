@@ -10,16 +10,10 @@ import { cn } from "@/lib/utils"
 interface PurchaseRequestItemProps {
   prNumber: string
   status: string
-  currentDesignation: string
   trackingHistory: TrackingEntry[]
 }
 
-export function PurchaseRequestItem({
-  prNumber,
-  status,
-  currentDesignation,
-  trackingHistory,
-}: PurchaseRequestItemProps) {
+export function PurchaseRequestItem({ prNumber, status, trackingHistory }: PurchaseRequestItemProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const toggleDropdown = () => setIsOpen(!isOpen)

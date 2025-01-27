@@ -15,11 +15,13 @@ export default function DocumentationGuidePage() {
             out of our documentation:
           </p>
           <ul className="list-disc list-inside mt-4">
-            <li>Start with the 'Getting Started' section for an overview of the system</li>
+            <li>Start with the &apos;Getting Started&apos; section for an overview of the system</li>
             <li>Use the search function to find specific topics quickly</li>
             <li>Check out code examples to see how to implement various features</li>
             <li>Refer to the API Reference for detailed information on all available endpoints</li>
-            <li>If you can't find what you're looking for, don't hesitate to contact our support team</li>
+            <li>
+              If you can&apos;t find what you&apos;re looking for, don&apos;t hesitate to contact our support team
+            </li>
           </ul>
         </CardContent>
       </Card>

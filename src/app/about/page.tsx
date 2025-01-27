@@ -19,7 +19,7 @@ export default function AboutPage() {
           <ul className="list-disc list-inside">
             <li>Innovation: We continuously seek new ways to improve procurement processes</li>
             <li>Integrity: We uphold the highest standards of honesty and ethical conduct</li>
-            <li>Customer-Centric: We put our customers' needs at the heart of everything we do</li>
+            <li>Customer-Centric: We put our customers&apos; needs at the heart of everything we do</li>
             <li>Collaboration: We believe in the power of teamwork and partnerships</li>
           </ul>
         </CardContent>

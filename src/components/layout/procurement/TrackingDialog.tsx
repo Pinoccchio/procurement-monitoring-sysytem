@@ -132,14 +132,14 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
           <>
             <SelectItem value="delivered">Delivered</SelectItem>
             <SelectItem value="assessed">Assess Delivery (Matches Order)</SelectItem>
-            <SelectItem value="discrepancy">Report Discrepancy (Doesn't Match Order)</SelectItem>
+            <SelectItem value="discrepancy">Report Discrepancy (Doesn&apos;t Match Order)</SelectItem>
           </>
         )
       case "assessed":
         return (
           <>
             <SelectItem value="assessed">Assessed (Matches Order)</SelectItem>
-            <SelectItem value="discrepancy">Report Discrepancy (Doesn't Match Order)</SelectItem>
+            <SelectItem value="discrepancy">Report Discrepancy (Doesn&apos;t Match Order)</SelectItem>
             <SelectItem value="forwarded">Forward</SelectItem>
           </>
         )
@@ -147,7 +147,7 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest, onUpdate }: T
         return (
           <>
             <SelectItem value="assessed">Assess Delivery (Matches Order)</SelectItem>
-            <SelectItem value="discrepancy">Discrepancy (Doesn't Match Order)</SelectItem>
+            <SelectItem value="discrepancy">Discrepancy (Doesn&apos;t Match Order)</SelectItem>
             <SelectItem value="returned">Return</SelectItem>
           </>
         )
