@@ -163,7 +163,7 @@ export async function submitContactForm(formData: FormData) {
 
     const emailTemplate = getEmailTemplate(submission)
     const result = await resend.emails.send({
-      from: "Procurement Monitoring System <onboarding@resend.dev>",
+      from: "Procurement Monitoring System <procurement-monitoring-sysytem-cr2q.vercel.app>",
       to: process.env.ADMIN_EMAIL as string,
       subject: emailTemplate.subject,
       html: emailTemplate.html,
