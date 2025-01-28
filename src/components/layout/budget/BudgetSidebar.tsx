@@ -64,9 +64,22 @@ export function BudgetSidebar({ isOpen, onClose, className }: BudgetSidebarProps
                 Budget
               </Button>
             </Link>
+            <Link href="/budget/remaining-funds" onClick={onClose}>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start hover:text-white hover:bg-[#2E8B57] transition-colors duration-300",
+                  pathname === "/remaining-funds" ? "bg-[#2E8B57] text-white" : "text-[#2E8B57]",
+                )}
+              >
+                <DollarSign className="mr-3 h-5 w-5" />
+                Remaining Funds
+              </Button>
+            </Link>
           </nav>
         </div>
       </motion.aside>
     </>
   )
 }
+

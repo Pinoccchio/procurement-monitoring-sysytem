@@ -6,30 +6,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { getBudgetProfile } from "@/utils/budget/purchase-requests"
+import { getBacProfile } from "@/utils/bac/purchase-requests"
 import type { User } from "@/types/procurement/user"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
-export default function BudgetProfilePage() {
+export default function BacProfilePage() {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function loadBudgetProfile() {
+    async function loadBacProfile() {
       try {
-        const profile = await getBudgetProfile()
+        const profile = await getBacProfile()
         setUser(profile)
       } catch (error) {
-        console.error("Error loading budget profile:", error)
-        setError("Failed to load budget profile. Please try again later.")
+        console.error("Error loading BAC profile:", error)
+        setError("Failed to load BAC profile. Please try again later.")
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadBudgetProfile()
+    loadBacProfile()
   }, [])
 
   if (isLoading) {
@@ -56,7 +56,7 @@ export default function BudgetProfilePage() {
       <div className="flex justify-center items-center h-screen">
         <div className="text-gray-500 text-center">
           <p className="text-xl font-bold mb-2">User Not Found</p>
-          <p>Unable to retrieve budget profile information.</p>
+          <p>Unable to retrieve BAC profile information.</p>
         </div>
       </div>
     )
@@ -72,7 +72,7 @@ export default function BudgetProfilePage() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
           <Button asChild variant="ghost" className="text-[#2E8B57] hover:text-[#1a5235]">
-            <Link href="/budget/dashboard">
+            <Link href="/bac/dashboard">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Link>
@@ -80,7 +80,7 @@ export default function BudgetProfilePage() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center text-[#2E8B57]">Budget User Profile</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center text-[#2E8B57]">BAC User Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <motion.div
@@ -117,7 +117,7 @@ export default function BudgetProfilePage() {
               className="space-y-2"
             >
               <Label htmlFor="role">Role</Label>
-              <Input id="role" value="Budget Officer" readOnly className="bg-gray-100" />
+              <Input id="role" value={user.account_type} readOnly className="bg-gray-100" />
             </motion.div>
           </CardContent>
         </Card>

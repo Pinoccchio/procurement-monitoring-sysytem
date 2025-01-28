@@ -160,46 +160,46 @@ export async function signOut() {
   }
 }
 
-export async function getUser(): Promise<User | null> {
+export async function getUser(): Promise<(User & { account_type: UserRole }) | null> {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
 
     if (userError) {
-      if (userError.message === 'Auth session missing!') {
-        console.log('No active session found')
+      if (userError.message === "Auth session missing!") {
+        console.log("No active session found")
         return null
       }
-      console.error('Error fetching auth user:', userError)
+      console.error("Error fetching auth user:", userError)
       return null
     }
 
     if (!user) {
-      console.log('No authenticated user found')
+      console.log("No authenticated user found")
       return null
     }
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single()
+    const { data, error } = await supabase.from("users").select("*, account_type").eq("id", user.id).single()
 
     if (error) {
-      console.error('Error fetching user profile:', error)
+      console.error("Error fetching user profile:", error)
       return null
     }
 
     if (!data) {
-      console.error('No user profile found for authenticated user')
+      console.error("No user profile found for authenticated user")
       return null
     }
 
-    console.log('User profile fetched successfully:', { id: data.id, email: data.email, role: data.account_type })
+    console.log("User profile fetched successfully:", { id: data.id, email: data.email, role: data.account_type })
 
-    return data as User
+    return data as User & { account_type: UserRole }
   } catch (error) {
-    console.error('Get user process error:', error)
+    console.error("Get user process error:", error)
     return null
   }
 }
+
 

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import { FileText } from "lucide-react"
+import { FileText, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import Link from "next/link"
@@ -64,9 +64,22 @@ export function BacSidebar({ isOpen, onClose, className }: BacSidebarProps) {
                 BAC
               </Button>
             </Link>
+            <Link href="/bac/remaining-funds" onClick={onClose}>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start hover:text-white hover:bg-[#2E8B57] transition-colors duration-300",
+                  pathname === "/bac/remaining-funds" ? "bg-[#2E8B57] text-white" : "text-[#2E8B57]",
+                )}
+              >
+                <DollarSign className="mr-3 h-5 w-5" />
+                Remaining Funds
+              </Button>
+            </Link>
           </nav>
         </div>
       </motion.aside>
     </>
   )
 }
+

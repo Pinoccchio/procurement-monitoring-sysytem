@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Check, X, FileText, AlertCircle, ArrowRight, ArrowLeft, CornerDownRight } from "lucide-react"
+import { Search, Check, X, FileText, AlertCircle, ArrowLeft, CornerDownRight } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function SupplyPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -33,7 +34,7 @@ export default function SupplyPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [returnDestination, setReturnDestination] = useState<PRDesignation | null>(null)
-  const [forwardDestination, setForwardDestination] = useState<PRDesignation | null>(null)
+  const [remarks, setRemarks] = useState("")
 
   useEffect(() => {
     loadPurchaseRequests()
@@ -56,15 +57,20 @@ export default function SupplyPage() {
   const handleStatusUpdate = async (pr: PurchaseRequest, newStatus: PRStatus, destination?: PRDesignation) => {
     try {
       setError(null)
-      let message = `Purchase request ${newStatus} by Supply`
+      let message = `Purchase request ${newStatus} by Supply${remarks ? ": " + remarks : ""}`
       if (newStatus === "assessed") {
-        message = "Delivery inspected and matches the order"
+        message = `Delivery inspected and matches the order${remarks ? ": " + remarks : ""}`
       } else if (newStatus === "discrepancy") {
-        message = "Delivery does not match the order"
+        message = `Delivery does not match the order${remarks ? ": " + remarks : ""}`
+      } else if (newStatus === "delivered") {
+        message = `Purchase request delivered${remarks ? ": " + remarks : ""}`
+      } else if (newStatus === "returned" && destination) {
+        message = `Purchase request returned to ${destination}${remarks ? ": " + remarks : ""}`
       }
       await updatePurchaseRequestStatus(pr.id, newStatus, destination || "supply", message)
       await loadPurchaseRequests()
       setSuccessMessage(`Purchase request ${newStatus} successfully!`)
+      setRemarks("") // Clear remarks after successful update
     } catch (error) {
       console.error(`Error updating purchase request status to ${newStatus}:`, error)
       setError(`Failed to update purchase request status to ${newStatus}. Please try again.`)
@@ -225,22 +231,33 @@ export default function SupplyPage() {
                                 </DialogTrigger>
                                 <DialogContent className="sm:max-w-[425px]">
                                   <DialogHeader>
-                                    <DialogTitle>Mark Purchase Request as Delivered</DialogTitle>
+                                    <DialogTitle>Confirm Delivery</DialogTitle>
                                     <DialogDescription>
-                                      Are you sure you want to mark {pr.pr_number} as delivered?
+                                      Are you sure you want to mark PR-{pr.pr_number} as delivered?
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="flex justify-end gap-2 mt-4">
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks (Optional)</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
                                     <DialogClose asChild>
                                       <Button variant="outline">Cancel</Button>
                                     </DialogClose>
                                     <Button
-                                      onClick={() => handleStatusUpdate(pr, "delivered")}
-                                      className="bg-purple-500 hover:bg-purple-600"
+                                      onClick={() => handleStatusUpdate(pr, "delivered", "supply")}
+                                      className="bg-purple-500 hover:bg-purple-600 text-white"
                                     >
                                       Confirm Delivery
                                     </Button>
-                                  </div>
+                                  </DialogFooter>
                                 </DialogContent>
                               </Dialog>
                             )}
@@ -265,7 +282,18 @@ export default function SupplyPage() {
                                         inspected.
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <div className="flex justify-end gap-2 mt-4">
+                                    <div className="grid gap-4 py-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="remarks">Remarks (Optional)</Label>
+                                        <Textarea
+                                          id="remarks"
+                                          value={remarks}
+                                          onChange={(e) => setRemarks(e.target.value)}
+                                          placeholder="Enter remarks..."
+                                        />
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
                                       <DialogClose asChild>
                                         <Button variant="outline">Cancel</Button>
                                       </DialogClose>
@@ -275,7 +303,7 @@ export default function SupplyPage() {
                                       >
                                         Confirm Assessment
                                       </Button>
-                                    </div>
+                                    </DialogFooter>
                                   </DialogContent>
                                 </Dialog>
                                 <Dialog>
@@ -295,7 +323,18 @@ export default function SupplyPage() {
                                         Report that the delivery for {pr.pr_number} does not match the order.
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <div className="flex justify-end gap-2 mt-4">
+                                    <div className="grid gap-4 py-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="remarks">Remarks (Optional)</Label>
+                                        <Textarea
+                                          id="remarks"
+                                          value={remarks}
+                                          onChange={(e) => setRemarks(e.target.value)}
+                                          placeholder="Enter remarks..."
+                                        />
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
                                       <DialogClose asChild>
                                         <Button variant="outline">Cancel</Button>
                                       </DialogClose>
@@ -305,7 +344,7 @@ export default function SupplyPage() {
                                       >
                                         Confirm Discrepancy
                                       </Button>
-                                    </div>
+                                    </DialogFooter>
                                   </DialogContent>
                                 </Dialog>
                               </>
@@ -330,7 +369,18 @@ export default function SupplyPage() {
                                         Are you sure you want to report a discrepancy for {pr.pr_number}?
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <div className="flex justify-end gap-2 mt-4">
+                                    <div className="grid gap-4 py-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="remarks">Remarks (Optional)</Label>
+                                        <Textarea
+                                          id="remarks"
+                                          value={remarks}
+                                          onChange={(e) => setRemarks(e.target.value)}
+                                          placeholder="Enter remarks..."
+                                        />
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
                                       <DialogClose asChild>
                                         <Button variant="outline">Cancel</Button>
                                       </DialogClose>
@@ -339,58 +389,6 @@ export default function SupplyPage() {
                                         className="bg-red-500 hover:bg-red-600"
                                       >
                                         Confirm Discrepancy
-                                      </Button>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      className="flex-1 sm:flex-none border-blue-500 text-blue-500 hover:bg-blue-50"
-                                    >
-                                      <ArrowRight className="h-4 w-4 mr-2" />
-                                      Forward
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="sm:max-w-[425px]">
-                                    <DialogHeader>
-                                      <DialogTitle>Forward Purchase Request</DialogTitle>
-                                      <DialogDescription>
-                                        Choose where to forward {pr.pr_number} and confirm the action.
-                                      </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                      <div className="space-y-2">
-                                        <Label htmlFor="forward-destination">Forward Destination</Label>
-                                        <Select onValueChange={(value: PRDesignation) => setForwardDestination(value)}>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Select destination" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="procurement">Procurement</SelectItem>
-                                            <SelectItem value="admin">Admin</SelectItem>
-                                            <SelectItem value="budget">Budget</SelectItem>
-                                            <SelectItem value="director">Director</SelectItem>
-                                            <SelectItem value="bac">BAC</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                    </div>
-                                    <DialogFooter>
-                                      <DialogClose asChild>
-                                        <Button variant="outline">Cancel</Button>
-                                      </DialogClose>
-                                      <Button
-                                        onClick={() => {
-                                          if (forwardDestination) {
-                                            handleStatusUpdate(pr, "forwarded", forwardDestination)
-                                          }
-                                        }}
-                                        disabled={!forwardDestination}
-                                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                                      >
-                                        Confirm Forward
                                       </Button>
                                     </DialogFooter>
                                   </DialogContent>
@@ -417,7 +415,18 @@ export default function SupplyPage() {
                                         Are you sure you want to assess {pr.pr_number} as correct?
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <div className="flex justify-end gap-2 mt-4">
+                                    <div className="grid gap-4 py-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="remarks">Remarks (Optional)</Label>
+                                        <Textarea
+                                          id="remarks"
+                                          value={remarks}
+                                          onChange={(e) => setRemarks(e.target.value)}
+                                          placeholder="Enter remarks..."
+                                        />
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
                                       <DialogClose asChild>
                                         <Button variant="outline">Cancel</Button>
                                       </DialogClose>
@@ -427,7 +436,7 @@ export default function SupplyPage() {
                                       >
                                         Confirm Assessment
                                       </Button>
-                                    </div>
+                                    </DialogFooter>
                                   </DialogContent>
                                 </Dialog>
                                 <Dialog>
@@ -462,6 +471,15 @@ export default function SupplyPage() {
                                             <SelectItem value="bac">BAC</SelectItem>
                                           </SelectContent>
                                         </Select>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="remarks">Remarks (Optional)</Label>
+                                        <Textarea
+                                          id="remarks"
+                                          value={remarks}
+                                          onChange={(e) => setRemarks(e.target.value)}
+                                          placeholder="Enter remarks..."
+                                        />
                                       </div>
                                     </div>
                                     <DialogFooter>

@@ -117,7 +117,7 @@ export default function DirectorProfilePage() {
               className="space-y-2"
             >
               <Label htmlFor="role">Role</Label>
-              <Input id="role" value="Director" readOnly className="bg-gray-100" />
+              <Input id="role" value={user.account_type} readOnly className="bg-gray-100" />
             </motion.div>
           </CardContent>
         </Card>

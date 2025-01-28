@@ -93,7 +93,7 @@ export async function getBudgetProfile(): Promise<User | null> {
 
     const { data, error } = await supabaseClient
       .from("users")
-      .select("id, first_name, last_name, email")
+      .select("id, first_name, last_name, email, account_type")
       .eq("id", user.id)
       .single()
 

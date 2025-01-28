@@ -117,7 +117,7 @@ export default function ProcurementProfilePage() {
               className="space-y-2"
             >
               <Label htmlFor="role">Role</Label>
-              <Input id="role" value="Procurement Officer" readOnly className="bg-gray-100" />
+              <Input id="role" value={user.account_type} readOnly className="bg-gray-100" />
             </motion.div>
           </CardContent>
         </Card>

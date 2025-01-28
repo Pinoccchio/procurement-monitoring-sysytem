@@ -117,7 +117,7 @@ export default function EndUserProfilePage() {
               className="space-y-2"
             >
               <Label htmlFor="role">Role</Label>
-              <Input id="role" value="End-User" readOnly className="bg-gray-100" />
+              <Input id="role" value={user.account_type} readOnly className="bg-gray-100" />
             </motion.div>
           </CardContent>
         </Card>

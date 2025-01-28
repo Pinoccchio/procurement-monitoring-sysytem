@@ -1,4 +1,4 @@
-import type { PurchaseRequest, TrackingEntry, PRStatus } from "@/types/procurement/purchase-request"
+import type { PurchaseRequest, TrackingEntry, PRStatus, PRDesignation } from "@/types/procurement/purchase-request"
 import type { User } from "@/types/procurement/user"
 import { createClient } from "@supabase/supabase-js"
 
@@ -27,7 +27,7 @@ export async function getPurchaseRequests(): Promise<PurchaseRequest[]> {
 export async function updatePurchaseRequestStatus(
   prId: string,
   status: PRStatus,
-  designation: string,
+  designation: PRDesignation,
   notes?: string,
 ): Promise<void> {
   const { error: updateError } = await supabaseClient
@@ -93,7 +93,7 @@ export async function getSupplyProfile(): Promise<User | null> {
 
     const { data, error } = await supabaseClient
       .from("users")
-      .select("id, first_name, last_name, email")
+      .select("id, first_name, last_name, email, account_type")
       .eq("id", user.id)
       .single()
 

@@ -110,6 +110,15 @@ export default function AdminProfilePage() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" value={user.email} readOnly className="bg-gray-100" />
             </motion.div>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="space-y-2"
+            >
+              <Label htmlFor="role">Role</Label>
+              <Input id="role" value={user.account_type} readOnly className="bg-gray-100" />
+            </motion.div>
           </CardContent>
         </Card>
       </div>

@@ -10,6 +10,7 @@ import Image from "next/image"
 import { ChevronRight, BarChart2, Clock, Users, FileText, ShieldCheck, Search, Menu } from "lucide-react"
 import { LoginDialog } from "@/components/LoginDialog"
 import { SignUpDialog } from "@/components/SignupDialog"
+import { ContactDialog } from "@/components/ContactDialog"
 import { motion } from "framer-motion"
 import { getUser } from "@/utils/auth"
 
@@ -18,6 +19,7 @@ type IconProps = React.ComponentProps<"svg">
 export default function HomePage() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isSignUpOpen, setIsSignUpOpen] = useState(false)
+  const [isContactOpen, setIsContactOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -139,7 +141,6 @@ export default function HomePage() {
 
       <main className="flex-grow mt-16">
         <section className="bg-[#2E8B57] text-white py-20 sm:py-24 md:py-32 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOGM5Ljk0MSAwIDE4LTguMDU5IDE4LTE4cy04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNHMxNCA2LjI2OCAxNCAxNHMtNi4yNjggMTQtMTQgMTR6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvZz48L3N2Zz4=')] opacity-10" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -268,10 +269,12 @@ export default function HomePage() {
               <p className="mt-4 text-lg text-slate-600 mb-8">
                 Have questions or ready to transform your procurement monitoring process? Contact us today!
               </p>
-              <Button size="lg" asChild className="bg-[#2E8B57] hover:bg-[#1a5235] text-white">
-                <Link href="https://www.facebook.com/abe.mendiola.50" target="_blank" rel="noopener noreferrer">
-                  Contact Us
-                </Link>
+              <Button
+                size="lg"
+                onClick={() => setIsContactOpen(true)}
+                className="bg-[#2E8B57] hover:bg-[#1a5235] text-white"
+              >
+                Contact Us
               </Button>
             </div>
           </div>
@@ -389,6 +392,7 @@ export default function HomePage() {
 
       <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onShowSignUp={showSignUp} />
       <SignUpDialog isOpen={isSignUpOpen} onClose={() => setIsSignUpOpen(false)} onShowLogin={showLogin} />
+      <ContactDialog isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </div>
   )
 }

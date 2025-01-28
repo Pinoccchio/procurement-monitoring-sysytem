@@ -61,11 +61,20 @@ export function TrackingDialog({ isOpen, onClose, purchaseRequest }: TrackingDia
       entry.status === "delivered" && "text-violet-500",
     )
 
-    return (
-      <span className={statusClass}>
-        PR {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)} by {entry.designation}
-      </span>
-    )
+    switch (entry.status) {
+      case "forwarded":
+        return <span className={statusClass}>PR Forwarded to {entry.designation}</span>
+      case "returned":
+        return <span className={statusClass}>PR Returned to {entry.designation}</span>
+      case "delivered":
+        return <span className={statusClass}>PR Delivered to {entry.designation}</span>
+      default:
+        return (
+          <span className={statusClass}>
+            PR {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)} by {entry.designation}
+          </span>
+        )
+    }
   }
 
   return (

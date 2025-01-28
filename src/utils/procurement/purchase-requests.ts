@@ -68,29 +68,28 @@ export async function getPurchaseRequests(): Promise<PurchaseRequest[]> {
 export async function updatePurchaseRequestStatus(
   prId: string,
   status: PRStatus,
-  designation: PRDesignation,
+  nextDesignation: PRDesignation,
   notes?: string,
-  notificationTypes: string[] = ["procurement"],
 ): Promise<void> {
   const { error: updateError } = await supabaseClient
     .from("purchase_requests")
     .update({
       status: status,
-      current_designation: designation,
+      current_designation: nextDesignation,
     })
     .eq("id", prId)
 
   if (updateError) throw updateError
 
-  const trackingEntries = notificationTypes.map((type) => ({
-    pr_id: prId,
-    status: status,
-    designation: designation,
-    notes: notes,
-    notification_type: type,
-  }))
-
-  const { error: trackingError } = await supabaseClient.from("tracking_history").insert(trackingEntries)
+  const { error: trackingError } = await supabaseClient.from("tracking_history").insert([
+    {
+      pr_id: prId,
+      status: status,
+      designation: nextDesignation,
+      notes: notes,
+      notification_type: "procurement",
+    },
+  ])
 
   if (trackingError) throw trackingError
 }
@@ -135,7 +134,7 @@ export async function getUserProfile(): Promise<User | null> {
 
     const { data, error } = await supabaseClient
       .from("users")
-      .select("id, first_name, last_name, email")
+      .select("id, first_name, last_name, email, account_type")
       .eq("id", user.id)
       .single()
 

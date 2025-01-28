@@ -24,7 +24,7 @@ import {
   getPurchaseRequests,
   updatePurchaseRequestStatus,
 } from "@/utils/procurement/purchase-requests"
-import type { PurchaseRequest, PRDesignation } from "@/types/procurement/purchase-request"
+import type { PurchaseRequest, PRStatus, PRDesignation } from "@/types/procurement/purchase-request"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -67,6 +67,7 @@ export default function ProcurementPurchaseRequestsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [returnDestination, setReturnDestination] = useState<PRDesignation | null>(null)
   const [forwardDestination, setForwardDestination] = useState<PRDesignation | null>(null)
+  const [remarks, setRemarks] = useState("")
 
   useEffect(() => {
     loadPurchaseRequests()
@@ -129,78 +130,20 @@ export default function ProcurementPurchaseRequestsPage() {
     }
   }
 
-  const handleReceive = async (pr: PurchaseRequest) => {
+  const handleStatusUpdate = async (pr: PurchaseRequest, newStatus: PRStatus, destination?: PRDesignation) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(pr.id, "received", "procurement", "Purchase request received by Procurement")
+      let message = `Purchase request ${newStatus} by Procurement: ${remarks}`
+      if (newStatus === "forwarded" || newStatus === "returned") {
+        message = `Purchase request ${newStatus} to ${destination} by Procurement: ${remarks}`
+      }
+      await updatePurchaseRequestStatus(pr.id, newStatus, destination || "procurement", message)
       await loadPurchaseRequests()
-      setSuccessMessage("Purchase request received successfully!")
+      setSuccessMessage(`Purchase request ${newStatus} successfully!`)
+      setRemarks("") // Clear remarks after successful update
     } catch (error) {
-      console.error("Error receiving purchase request:", error)
-      setError("Failed to receive purchase request. Please try again.")
-    }
-  }
-
-  const handleApprove = async (pr: PurchaseRequest) => {
-    try {
-      setError(null)
-      await updatePurchaseRequestStatus(pr.id, "approved", "procurement", "Purchase request approved by Procurement")
-      await loadPurchaseRequests()
-      setSuccessMessage("Purchase request approved successfully!")
-    } catch (error) {
-      console.error("Error approving purchase request:", error)
-      setError("Failed to approve purchase request. Please try again.")
-    }
-  }
-
-  const handleDisapprove = async (pr: PurchaseRequest) => {
-    try {
-      setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        "disapproved",
-        "procurement",
-        "Purchase request disapproved by Procurement",
-      )
-      await loadPurchaseRequests()
-      setSuccessMessage("Purchase request disapproved successfully!")
-    } catch (error) {
-      console.error("Error disapproving purchase request:", error)
-      setError("Failed to disapprove purchase request. Please try again.")
-    }
-  }
-
-  const handleReturn = async (pr: PurchaseRequest, destination: PRDesignation) => {
-    try {
-      setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        "returned",
-        destination,
-        `Purchase request returned to ${destination} by Procurement`,
-      )
-      await loadPurchaseRequests()
-      setSuccessMessage("Purchase request returned successfully!")
-    } catch (error) {
-      console.error("Error returning purchase request:", error)
-      setError("Failed to return purchase request. Please try again.")
-    }
-  }
-
-  const handleForward = async (pr: PurchaseRequest, destination: PRDesignation) => {
-    try {
-      setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        "forwarded",
-        destination,
-        `Purchase request forwarded to ${destination} by Procurement`,
-      )
-      await loadPurchaseRequests()
-      setSuccessMessage("Purchase request forwarded successfully!")
-    } catch (error) {
-      console.error("Error forwarding purchase request:", error)
-      setError("Failed to forward purchase request. Please try again.")
+      console.error(`Error updating purchase request status to ${newStatus}:`, error)
+      setError(`Failed to update purchase request status to ${newStatus}. Please try again.`)
     }
   }
 
@@ -393,14 +336,28 @@ export default function ProcurementPurchaseRequestsPage() {
                                       Are you sure you want to receive {pr.pr_number}?
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="flex justify-end gap-2 mt-4">
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
                                     <DialogClose asChild>
                                       <Button variant="outline">Cancel</Button>
                                     </DialogClose>
-                                    <Button onClick={() => handleReceive(pr)} className="bg-blue-500 hover:bg-blue-600">
+                                    <Button
+                                      onClick={() => handleStatusUpdate(pr, "received")}
+                                      className="bg-blue-500 hover:bg-blue-600"
+                                    >
                                       Confirm Receipt
                                     </Button>
-                                  </div>
+                                  </DialogFooter>
                                 </DialogContent>
                               </Dialog>
                             )}
@@ -423,17 +380,28 @@ export default function ProcurementPurchaseRequestsPage() {
                                       Are you sure you want to approve {pr.pr_number}?
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="flex justify-end gap-2 mt-4">
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
                                     <DialogClose asChild>
                                       <Button variant="outline">Cancel</Button>
                                     </DialogClose>
                                     <Button
-                                      onClick={() => handleApprove(pr)}
+                                      onClick={() => handleStatusUpdate(pr, "approved")}
                                       className="bg-green-500 hover:bg-green-600"
                                     >
                                       Confirm Approval
                                     </Button>
-                                  </div>
+                                  </DialogFooter>
                                 </DialogContent>
                               </Dialog>
                             )}
@@ -456,14 +424,25 @@ export default function ProcurementPurchaseRequestsPage() {
                                       Are you sure you want to disapprove {pr.pr_number}?
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="flex justify-end gap-2 mt-4">
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
                                     <DialogClose asChild>
                                       <Button variant="outline">Cancel</Button>
                                     </DialogClose>
-                                    <Button onClick={() => handleDisapprove(pr)} variant="destructive">
+                                    <Button onClick={() => handleStatusUpdate(pr, "disapproved")} variant="destructive">
                                       Confirm Disapproval
                                     </Button>
-                                  </div>
+                                  </DialogFooter>
                                 </DialogContent>
                               </Dialog>
                             )}
@@ -502,6 +481,15 @@ export default function ProcurementPurchaseRequestsPage() {
                                         </SelectContent>
                                       </Select>
                                     </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
                                   </div>
                                   <DialogFooter>
                                     <DialogClose asChild>
@@ -510,7 +498,7 @@ export default function ProcurementPurchaseRequestsPage() {
                                     <Button
                                       onClick={() => {
                                         if (forwardDestination) {
-                                          handleForward(pr, forwardDestination)
+                                          handleStatusUpdate(pr, "forwarded", forwardDestination)
                                         }
                                       }}
                                       disabled={!forwardDestination}
@@ -557,6 +545,15 @@ export default function ProcurementPurchaseRequestsPage() {
                                         </SelectContent>
                                       </Select>
                                     </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
                                   </div>
                                   <DialogFooter>
                                     <DialogClose asChild>
@@ -565,7 +562,7 @@ export default function ProcurementPurchaseRequestsPage() {
                                     <Button
                                       onClick={() => {
                                         if (returnDestination) {
-                                          handleReturn(pr, returnDestination)
+                                          handleStatusUpdate(pr, "returned", returnDestination)
                                         }
                                       }}
                                       disabled={!returnDestination}

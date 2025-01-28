@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function BudgetPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -34,6 +35,8 @@ export default function BudgetPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [returnDestination, setReturnDestination] = useState<PRDesignation | null>(null)
   const [forwardDestination, setForwardDestination] = useState<PRDesignation | null>(null)
+  const [remarks, setRemarks] = useState("")
+  const [purchaseOrderType, setPurchaseOrderType] = useState<string>("")
 
   useEffect(() => {
     loadPurchaseRequests()
@@ -62,9 +65,10 @@ export default function BudgetPage() {
   const handleReceive = async (pr: PurchaseRequest) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(pr.id, "received", "budget", "Purchase request received by Budget")
+      await updatePurchaseRequestStatus(pr.id, "received", "budget", `Purchase request received by Budget: ${remarks}`)
       await loadPurchaseRequests()
       setSuccessMessage("Purchase request received successfully!")
+      setRemarks("")
     } catch (error) {
       console.error("Error receiving purchase request:", error)
       setError("Failed to receive purchase request. Please try again.")
@@ -74,9 +78,10 @@ export default function BudgetPage() {
   const handleApprove = async (pr: PurchaseRequest) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(pr.id, "approved", "budget", "Purchase request approved by Budget")
+      await updatePurchaseRequestStatus(pr.id, "approved", "budget", `Purchase request approved by Budget: ${remarks}`)
       await loadPurchaseRequests()
       setSuccessMessage("Purchase request approved successfully!")
+      setRemarks("")
     } catch (error) {
       console.error("Error approving purchase request:", error)
       setError("Failed to approve purchase request. Please try again.")
@@ -86,9 +91,15 @@ export default function BudgetPage() {
   const handleDisapprove = async (pr: PurchaseRequest) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(pr.id, "disapproved", "budget", "Purchase request disapproved by Budget")
+      await updatePurchaseRequestStatus(
+        pr.id,
+        "disapproved",
+        "budget",
+        `Purchase request disapproved by Budget: ${remarks}`,
+      )
       await loadPurchaseRequests()
       setSuccessMessage("Purchase request disapproved successfully!")
+      setRemarks("")
     } catch (error) {
       console.error("Error disapproving purchase request:", error)
       setError("Failed to disapprove purchase request. Please try again.")
@@ -102,10 +113,11 @@ export default function BudgetPage() {
         pr.id,
         "returned",
         destination,
-        `Purchase request returned to ${destination} by Budget`,
+        `Purchase request returned to ${destination} by Budget: ${remarks}`,
       )
       await loadPurchaseRequests()
       setSuccessMessage("Purchase request returned successfully!")
+      setRemarks("")
     } catch (error) {
       console.error("Error returning purchase request:", error)
       setError("Failed to return purchase request. Please try again.")
@@ -115,14 +127,15 @@ export default function BudgetPage() {
   const handleForward = async (pr: PurchaseRequest, destination: PRDesignation) => {
     try {
       setError(null)
-      await updatePurchaseRequestStatus(
-        pr.id,
-        "forwarded",
-        destination,
-        `Purchase request forwarded to ${destination} by Budget`,
-      )
+      let message = `Purchase request forwarded to ${destination} by Budget: ${remarks}`
+      if (destination === "procurement") {
+        message = `Purchase request forwarded to procurement for ${purchaseOrderType} by Budget: ${remarks}`
+      }
+      await updatePurchaseRequestStatus(pr.id, "forwarded", destination, message)
       await loadPurchaseRequests()
       setSuccessMessage("Purchase request forwarded successfully!")
+      setRemarks("")
+      setPurchaseOrderType("")
     } catch (error) {
       console.error("Error forwarding purchase request:", error)
       setError("Failed to forward purchase request. Please try again.")
@@ -272,14 +285,25 @@ export default function BudgetPage() {
                                       Are you sure you want to receive {pr.pr_number}?
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="flex justify-end gap-2 mt-4">
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
                                     <DialogClose asChild>
                                       <Button variant="outline">Cancel</Button>
                                     </DialogClose>
                                     <Button onClick={() => handleReceive(pr)} className="bg-blue-500 hover:bg-blue-600">
                                       Confirm Receipt
                                     </Button>
-                                  </div>
+                                  </DialogFooter>
                                 </DialogContent>
                               </Dialog>
                             )}
@@ -302,7 +326,18 @@ export default function BudgetPage() {
                                       Are you sure you want to approve {pr.pr_number}?
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="flex justify-end gap-2 mt-4">
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
                                     <DialogClose asChild>
                                       <Button variant="outline">Cancel</Button>
                                     </DialogClose>
@@ -312,7 +347,7 @@ export default function BudgetPage() {
                                     >
                                       Confirm Approval
                                     </Button>
-                                  </div>
+                                  </DialogFooter>
                                 </DialogContent>
                               </Dialog>
                             )}
@@ -335,14 +370,25 @@ export default function BudgetPage() {
                                       Are you sure you want to disapprove {pr.pr_number}?
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="flex justify-end gap-2 mt-4">
+                                  <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
                                     <DialogClose asChild>
                                       <Button variant="outline">Cancel</Button>
                                     </DialogClose>
                                     <Button onClick={() => handleDisapprove(pr)} variant="destructive">
                                       Confirm Disapproval
                                     </Button>
-                                  </div>
+                                  </DialogFooter>
                                 </DialogContent>
                               </Dialog>
                             )}
@@ -381,6 +427,33 @@ export default function BudgetPage() {
                                         </SelectContent>
                                       </Select>
                                     </div>
+                                    {forwardDestination === "procurement" && (
+                                      <div className="space-y-2">
+                                        <Label htmlFor="purchase-order-type">Purchase Order Type</Label>
+                                        <Select
+                                          value={purchaseOrderType}
+                                          onValueChange={(value: string) => setPurchaseOrderType(value)}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select purchase order type" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="Quotation and Abstract of Prices">
+                                              Quotation and Abstract of Prices
+                                            </SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    )}
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
+                                    </div>
                                   </div>
                                   <DialogFooter>
                                     <DialogClose asChild>
@@ -392,7 +465,10 @@ export default function BudgetPage() {
                                           handleForward(pr, forwardDestination)
                                         }
                                       }}
-                                      disabled={!forwardDestination}
+                                      disabled={
+                                        !forwardDestination ||
+                                        (forwardDestination === "procurement" && !purchaseOrderType)
+                                      }
                                       className="bg-blue-500 hover:bg-blue-600 text-white"
                                     >
                                       Confirm Forward
@@ -435,6 +511,15 @@ export default function BudgetPage() {
                                           <SelectItem value="supply">Supply</SelectItem>
                                         </SelectContent>
                                       </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="remarks">Remarks</Label>
+                                      <Textarea
+                                        id="remarks"
+                                        value={remarks}
+                                        onChange={(e) => setRemarks(e.target.value)}
+                                        placeholder="Enter remarks..."
+                                      />
                                     </div>
                                   </div>
                                   <DialogFooter>
