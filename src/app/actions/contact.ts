@@ -163,7 +163,7 @@ export async function submitContactForm(formData: FormData) {
 
     const emailTemplate = getEmailTemplate(submission)
     const result = await resend.emails.send({
-      from: "Procurement Monitoring System <jenjiliv@gmail.com>",
+      from: "Procurement System <contact@procurement-ms.com>",
       to: process.env.ADMIN_EMAIL as string,
       subject: emailTemplate.subject,
       html: emailTemplate.html,
